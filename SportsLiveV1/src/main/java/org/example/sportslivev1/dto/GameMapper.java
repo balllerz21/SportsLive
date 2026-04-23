@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.example.sportslivev1.entity.Games;
 
 public class GameMapper {
+    // all games page (dashboard)
     public static GameResponse toResponse(Games game) {
         GameResponse dto = new GameResponse();
 
@@ -22,6 +23,7 @@ public class GameMapper {
 
         return dto;
     }
+    // game_id page
     public static GameDetailResponse toDetailResponse(Games game) {
         GameDetailResponse dto = new GameDetailResponse();
         dto.setId(game.getId());
