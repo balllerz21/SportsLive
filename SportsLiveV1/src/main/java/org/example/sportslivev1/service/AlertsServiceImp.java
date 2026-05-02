@@ -28,16 +28,17 @@ public class AlertsServiceImp implements AlertsService {
 
     // add error handiling
     @Override
-    public void createAlert(Games game, String teamName, Alerts.AlertType alertType, int targetVal) {
+    public Alerts createAlert(Games game, String teamName, Alerts.AlertType alertType, int targetVal) {
         Optional<Games> g1 = gamesRepo.findById(game.getId());
         if (g1.isPresent())
         {
             Alerts alert = new Alerts(g1.get(), teamName, alertType, targetVal);
             alertsRepo.save(alert);
+            return alert;
         }
         else 
         {
-            return;
+            return null;
         }
     }
 

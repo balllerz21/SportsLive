@@ -10,6 +10,7 @@ import org.example.sportslivev1.entity.Alerts.AlertType;
 import org.example.sportslivev1.entity.Games;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,13 +34,16 @@ public class AlertsController {
     GamesServiceImp service2;
     
     @PostMapping("/add")
-    public void add(@RequestBody AlertsRequest alert) {
-        service.createAlert(
+    public ResponseEntity<AlertResponse> add(@RequestBody AlertsRequest alert) {
+        Alerts a = service.createAlert(
             service2.getGameById(alert.getGameId()),
             alert.getTeamName(),
             alert.getAlertType(),
             alert.getTargetVal()
         );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(AlertMapper.toResponse(a));
+
     }
     
     @GetMapping
