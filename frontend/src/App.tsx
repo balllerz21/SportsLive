@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
-import GamesPage from "./game/game";
-import GameIdPage from "./game/[id]/game[id]"
+import GamesPage from "./pages/game/game";
+import GameIdPage from "./pages/game/[id]/game[id]"
 
 function App() {
   return (
