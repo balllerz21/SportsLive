@@ -209,7 +209,7 @@ function GamePage() {
                 onChange={e => setFormAlertType(e.target.value)}
               >
                 <option value="SCORE_OVER">Score over</option>
-                <option value="SCORE_BELOW">Score below</option>
+                <option value="SCORE_UNDER">Score under</option>
               </select>
             </div>
 
