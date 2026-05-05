@@ -1,4 +1,5 @@
 package org.example.sportslivev1.service;
+import org.example.sportslivev1.Specifications.AlertsSpecifications;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.example.sportslivev1.entity.Alerts.AlertType;
@@ -6,13 +7,19 @@ import org.example.sportslivev1.entity.Games;
 import org.example.sportslivev1.repository.AlertsRepo;
 import org.example.sportslivev1.repository.GamesRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityNotFoundException;
 
 import java.time.Instant;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+
+import javax.naming.NameNotFoundException;
 
 
 @Service
@@ -38,21 +45,39 @@ public class AlertsServiceImp implements AlertsService {
         }
         else 
         {
-            return null;
+            throw new IllegalArgumentException("Wrong Fields for Alert.");
         }
     }
 
     @Override
-    public List<Alerts> getAllAlerts() {
+    public List<Alerts> getAllAlerts(Alerts.AlertStatus status, Alerts.AlertType type, String team) {
+        Specification<Alerts> spec = Specification.where((Specification<Alerts>) null);
+        if (status != null){
+            spec = spec.and(AlertsSpecifications.hasStatus(status));
+        }
+        if (team != null && !team.isEmpty()){
+            spec = spec.and(AlertsSpecifications.hasTeam(team));
+        }
+        if (type != null){
+            spec = spec.and(AlertsSpecifications.hasType(type));
+        }
+        return (List<Alerts>) alertsRepo.findAll(spec);
+    }
+    public List<Alerts> getAllAlerts()
+    {
         return (List<Alerts>) alertsRepo.findAll();
     }
+
     @Override
     public Alerts getAlertById(Long id) {
         Optional<Alerts> alert = alertsRepo.findById(id);
         if (alert.isPresent())
             return alert.get();
         else
-            return null;
+        {
+            throw new EntityNotFoundException("Alert ID not found");
+        }
+
 
     }
     @Override

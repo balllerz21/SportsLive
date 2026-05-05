@@ -9,6 +9,7 @@ import org.example.sportslivev1.repository.GamesRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -31,7 +32,7 @@ public class GamesServiceImp implements GamesService {
         }
         else
         {
-            return null;
+            throw new EntityNotFoundException("Game ID not found");
         }
     }
     @Override

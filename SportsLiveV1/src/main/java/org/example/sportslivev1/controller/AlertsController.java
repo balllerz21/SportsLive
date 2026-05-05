@@ -1,14 +1,18 @@
 package org.example.sportslivev1.controller;
 
+import org.example.sportslivev1.repository.AlertsRepo;
 import org.example.sportslivev1.service.AlertsServiceImp;
 import org.example.sportslivev1.service.GamesServiceImp;
+import org.example.sportslivev1.Specifications.AlertsSpecifications;
 import org.example.sportslivev1.dto.AlertMapper;
 import org.example.sportslivev1.dto.AlertResponse;
 import org.example.sportslivev1.dto.AlertsRequest;
 import org.example.sportslivev1.entity.Alerts;
+import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.example.sportslivev1.entity.Alerts.AlertType;
 import org.example.sportslivev1.entity.Games;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RestController
 @RequestMapping("/alerts")
 public class AlertsController {
+
     @Autowired
     AlertsServiceImp service;
     @Autowired
@@ -47,17 +52,9 @@ public class AlertsController {
     }
     
     @GetMapping
-    public List<AlertResponse> getAllAlerts(@RequestParam(required = false) String team, @RequestParam(required = false) AlertType type) {
+    public List<AlertResponse> getAllAlerts(@RequestParam(required = false) String team, @RequestParam(required = false) AlertType type, @RequestParam(required = false) AlertStatus status) {
         List<Alerts> alerts;
-        if (team != null && type != null) {
-            alerts = service.getAlertsByTypeAndTeam(team, type);
-        } else if (team != null) {
-            alerts = service.getAlertsByTeamName(team);
-        } else if (type != null) {
-            alerts = service.getAlertsByAlertType(type);
-        } else {
-            alerts = service.getAllAlerts();
-        }
+        alerts = service.getAllAlerts(status, type, team);
         return alerts.stream().map(AlertMapper::toResponse).toList();
     }
     @GetMapping("/{id}")

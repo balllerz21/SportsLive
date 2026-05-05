@@ -8,11 +8,12 @@ import java.time.Instant;
 import org.example.sportslivev1.entity.*;
 import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 // Next DONE: See what searching mechanisms the app will need. Example: CreatedAt and isActive can be combined as well as AlertType and targetVal
 @Repository
-public interface AlertsRepo extends JpaRepository<Alerts, Long>
+public interface AlertsRepo extends JpaRepository<Alerts, Long>, JpaSpecificationExecutor<Alerts>
 {
     List<Alerts> findByTeamName(String teamName);
     List<Alerts> findByAlertType(Alerts.AlertType alertType);
