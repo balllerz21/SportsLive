@@ -20,8 +20,11 @@ import org.example.sportslivev1.entity.Games;
 import org.example.sportslivev1.service.AlertsServiceImp;
 import org.example.sportslivev1.service.GamesServiceImp;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -61,13 +64,21 @@ public class AlertsControllerTest {
                 Instant.parse("2026-04-18T02:00:00Z")
         );
         game.setId(902L);
+        Alerts savedAlert = new Alerts(game, "Charlotte Hornets", Alerts.AlertType.SCORE_OVER, 126);
+        savedAlert.setId(1L);
 
         when(gamesService.getGameById(902L)).thenReturn(game);
+        when(alertsService.createAlert(
+                same(game),
+                eq("Charlotte Hornets"),
+                eq(Alerts.AlertType.SCORE_OVER),
+                eq(126)
+        )).thenReturn(savedAlert);
 
         mockMvc.perform(post("/alerts/add")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         verify(gamesService).getGameById(902L);
         verify(alertsService).createAlert(
@@ -130,8 +141,7 @@ public class AlertsControllerTest {
         Alerts a2 = new Alerts(game, "Phoenix Suns", Alerts.AlertType.SCORE_UNDER, 105);
         a2.setId(2L);
 
-        when(alertsService.getAllAlerts()).thenReturn(List.of(a1, a2));
-
+        when(alertsService.getAllAlerts(null, null, null, null)).thenReturn(List.of(a1, a2));
         mockMvc.perform(get("/alerts")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -144,7 +154,7 @@ public class AlertsControllerTest {
                 .andExpect(jsonPath("$[1].alertType").value("SCORE_UNDER"))
                 .andExpect(jsonPath("$[1].targetVal").value(105));
 
-        verify(alertsService).getAllAlerts();
+        verify(alertsService).getAllAlerts(null, null, null, null);
     }
 
     @Test

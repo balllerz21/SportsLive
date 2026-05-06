@@ -1,4 +1,6 @@
-package org.example.sportslivev1.Specifications;
+package org.example.sportslivev1.specifications;
+import java.time.Instant;
+
 import org.example.sportslivev1.entity.Alerts;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -17,6 +19,11 @@ public class AlertsSpecifications {
     }
     // user can search by type
     public static Specification<Alerts> hasType(Alerts.AlertType type) {
-        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("alertTyoe"), type);
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("alertType"), type);
+    }
+    // user can search by created date
+    public static Specification<Alerts> hasDate(Instant date)
+    {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("createdAt"), date);
     }
 }
