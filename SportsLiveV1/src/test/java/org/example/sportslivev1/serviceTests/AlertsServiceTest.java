@@ -3,7 +3,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -23,13 +25,18 @@ import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.example.sportslivev1.entity.Alerts.AlertType;
 import org.example.sportslivev1.repository.AlertsRepo;
 import org.example.sportslivev1.repository.GamesRepo;
+import org.example.sportslivev1.service.AlertsService;
 import org.example.sportslivev1.service.AlertsServiceImp;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
+
+import jakarta.persistence.EntityNotFoundException;
 
 // TODO: Add Alerts test for edited getAllAlerts()
 
@@ -37,6 +44,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class AlertsServiceTest {
     @Mock
     private AlertsRepo alertsRepo;
+
+    @Mock
+    private AlertsService service;
 
     @Mock
     private GamesRepo gamesRepo;
@@ -95,13 +105,15 @@ public class AlertsServiceTest {
             Games.Status.FINAL,
             Instant.parse("2026-04-18T02:00:00Z"));
         test.setId(id);
-        when(gamesRepo.findById(id)).thenReturn(Optional.empty());
-
-        alertsService.createAlert(test, "Phoenix Suns", Alerts.AlertType.SCORE_OVER, 120);
-
+        when(gamesRepo.findById(id)).thenThrow(new IllegalArgumentException("Wrong Fields For Alert."));
+        Throwable exception = assertThrows(RuntimeException.class, () -> {
+            alertsService.createAlert(test, "Phoenix Suns", Alerts.AlertType.SCORE_OVER, 120);
+        });
+        assertEquals("Wrong Fields For Alert.", exception.getMessage());
         verify(alertsRepo, times(0)).save(any(Alerts.class));
         verify(gamesRepo).findById(id);
     }
+    // old getAllAlerts
     @Test 
     public void getAllAlertsTest()
     {
@@ -113,6 +125,19 @@ public class AlertsServiceTest {
         assertEquals(2, listAleerts.size());
         assertEquals(a1, listAleerts.get(0));
         assertEquals(a2, listAleerts.get(1));
+    }
+    // testing some ways a query can be ran w Specifications
+    @Test
+    public void getAlertsSpecifications()
+    {
+        Alerts a1 = buildAlerts();
+        Alerts a2 = new Alerts(a1.getGame(), "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 100);
+        when(alertsRepo.findAll(any(Specification.class))).thenReturn(List.of(a1, a2));
+        List<Alerts> listAlerts = alertsService.getAllAlerts(null, null, null, null);
+
+        assertEquals(2, listAlerts.size());
+        assertEquals(a1, listAlerts.get(0));
+        assertEquals(a2, listAlerts.get(1));
     }
     @Test
     public void getAlertsByIdTest1()
@@ -128,9 +153,11 @@ public class AlertsServiceTest {
     public void getAlertsByIdTest2()
     {
         Long id = 2L;
-        when(alertsRepo.findById(id)).thenReturn(Optional.empty());
-        Alerts a1 = alertsService.getAlertById(id);
-        assertNull(a1);
+        when(alertsRepo.findById(id)).thenThrow(new EntityNotFoundException("Alert ID not found."));
+        Throwable exception = assertThrows(RuntimeException.class, () -> {
+            alertsService.getAlertById(id);
+        });
+        assertEquals("Alert ID not found.", exception.getMessage());
     }
     @Test
     public void getAlertsByTeamNameTest()

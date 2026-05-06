@@ -1,11 +1,11 @@
 package org.example.sportslivev1.service;
-import org.example.sportslivev1.Specifications.AlertsSpecifications;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.example.sportslivev1.entity.Alerts.AlertType;
 import org.example.sportslivev1.entity.Games;
 import org.example.sportslivev1.repository.AlertsRepo;
 import org.example.sportslivev1.repository.GamesRepo;
+import org.example.sportslivev1.specifications.AlertsSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.data.jpa.domain.Specification;
@@ -50,8 +50,8 @@ public class AlertsServiceImp implements AlertsService {
     }
 
     @Override
-    public List<Alerts> getAllAlerts(Alerts.AlertStatus status, Alerts.AlertType type, String team) {
-        Specification<Alerts> spec = Specification.where((Specification<Alerts>) null);
+    public List<Alerts> getAllAlerts(Alerts.AlertStatus status, Alerts.AlertType type, String team, Instant date) {
+        Specification<Alerts> spec = Specification.unrestricted();
         if (status != null){
             spec = spec.and(AlertsSpecifications.hasStatus(status));
         }
@@ -60,6 +60,9 @@ public class AlertsServiceImp implements AlertsService {
         }
         if (type != null){
             spec = spec.and(AlertsSpecifications.hasType(type));
+        }
+        if (date != null){
+            spec = spec.and(AlertsSpecifications.hasDate(date));
         }
         return (List<Alerts>) alertsRepo.findAll(spec);
     }

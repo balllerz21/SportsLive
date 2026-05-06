@@ -3,6 +3,7 @@ package org.example.sportslivev1.serviceTests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -19,6 +20,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 public class GamesServiceTest {
@@ -84,11 +87,11 @@ public class GamesServiceTest {
     public void getGameByIdTest2() {
         Long id = 99L;
 
-        when(gamesRepo.findById(id)).thenReturn(Optional.empty());
-
-        Games result = gamesService.getGameById(id);
-
-        assertNull(result);
+        when(gamesRepo.findById(id)).thenThrow(new EntityNotFoundException("Game ID not found."));
+        Throwable exception = assertThrows(RuntimeException.class, () -> {
+            gamesService.getGameById(id);
+        });
+        assertEquals("Game ID not found.", exception.getMessage());
     }
 
     @Test

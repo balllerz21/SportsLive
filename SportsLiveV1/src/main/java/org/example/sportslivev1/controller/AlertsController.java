@@ -3,7 +3,7 @@ package org.example.sportslivev1.controller;
 import org.example.sportslivev1.repository.AlertsRepo;
 import org.example.sportslivev1.service.AlertsServiceImp;
 import org.example.sportslivev1.service.GamesServiceImp;
-import org.example.sportslivev1.Specifications.AlertsSpecifications;
+import org.example.sportslivev1.specifications.AlertsSpecifications;
 import org.example.sportslivev1.dto.AlertMapper;
 import org.example.sportslivev1.dto.AlertResponse;
 import org.example.sportslivev1.dto.AlertsRequest;
@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,15 +53,15 @@ public class AlertsController {
     }
     
     @GetMapping
-    public List<AlertResponse> getAllAlerts(@RequestParam(required = false) String team, @RequestParam(required = false) AlertType type, @RequestParam(required = false) AlertStatus status) {
+    public List<AlertResponse> getAllAlerts(@RequestParam(required = false) String team, @RequestParam(required = false) AlertType type, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) Instant date) {
         List<Alerts> alerts;
-        alerts = service.getAllAlerts(status, type, team);
+        alerts = service.getAllAlerts(status, type, team, date);
         return alerts.stream().map(AlertMapper::toResponse).toList();
     }
     @GetMapping("/{id}")
-    public AlertResponse alertById(@PathVariable Long id) {
+    public ResponseEntity<AlertResponse> alertById(@PathVariable Long id) {
         Alerts alert = service.getAlertById(id);
-        return AlertMapper.toResponse(alert);
+        return ResponseEntity.ok(AlertMapper.toResponse(alert));
     }
     // @GetMapping("/team")
     // public List<Alerts> alertsByTeam(@RequestParam String team) {
