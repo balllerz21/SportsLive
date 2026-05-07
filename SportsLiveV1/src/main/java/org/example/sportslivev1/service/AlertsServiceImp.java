@@ -66,10 +66,10 @@ public class AlertsServiceImp implements AlertsService {
         }
         return (List<Alerts>) alertsRepo.findAll(spec);
     }
-    public List<Alerts> getAllAlerts()
-    {
-        return (List<Alerts>) alertsRepo.findAll();
-    }
+    // public List<Alerts> getAllAlerts()
+    // {
+    //     return (List<Alerts>) alertsRepo.findAll();
+    // }
 
     @Override
     public Alerts getAlertById(Long id) {
