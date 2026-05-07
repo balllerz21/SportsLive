@@ -13,6 +13,7 @@ import org.example.sportslivev1.entity.Alerts.AlertType;
 import org.example.sportslivev1.entity.Games;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -53,9 +54,9 @@ public class AlertsController {
     }
     
     @GetMapping
-    public List<AlertResponse> getAllAlerts(@RequestParam(required = false) String team, @RequestParam(required = false) AlertType type, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) Instant date) {
+    public List<AlertResponse> getAllAlerts(@RequestParam(required = false) String teamName, @RequestParam(required = false) AlertType alertType, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) Instant createdAt) {
         List<Alerts> alerts;
-        alerts = service.getAllAlerts(status, type, team, date);
+        alerts = service.getAllAlerts(status, alertType, teamName, createdAt);
         return alerts.stream().map(AlertMapper::toResponse).toList();
     }
     @GetMapping("/{id}")
