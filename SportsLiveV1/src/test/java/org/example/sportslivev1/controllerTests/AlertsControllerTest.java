@@ -247,35 +247,6 @@ public class AlertsControllerTest {
                 verify(alertsService).getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors", null);
         }
 
-        // @Test
-        // void getAllAlertsTest5() throws Exception {
-        //         Games game = new Games("401866759", "Phoenix Suns", "Golden State Warriors", 111, 96, Games.Status.FINAL, Instant.parse("2026-04-18T02:00:00Z"));
-        //         game.setId(204L);
-
-        //         Alerts a1 = new Alerts(game, "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 120);
-        //         a1.setId(1L);
-        //         a1.setAlertStatus(Alerts.AlertStatus.TRIGGERED);
-
-        //         when(alertsService.getAllAlerts(
-        //                 eq(Alerts.AlertStatus.TRIGGERED), 
-        //                 eq(Alerts.AlertType.SCORE_OVER), 
-        //                 eq("Golden State Warriors"), 
-        //                 any(Instant.class) // Handles the Instant conversion mismatch
-        //         )).thenReturn(List.of(a1));
-
-        //         mockMvc.perform(get("/alerts?status=TRIGGERED&alertType=SCORE_OVER&teamName=Golden State Warriors&createdAt=2026-04-18T02:00:00Z\"")
-        //                 .accept(MediaType.APPLICATION_JSON))
-        //                 .andExpect(status().isOk())
-        //                 .andExpect(jsonPath("$[0].id").value(1))
-        //                 .andExpect(jsonPath("$[0].teamName").value("Golden State Warriors"));
-
-        //         verify(alertsService).getAllAlerts(
-        //                 eq(Alerts.AlertStatus.TRIGGERED), 
-        //                 eq(Alerts.AlertType.SCORE_OVER), 
-        //                 eq("Golden State Warriors"), 
-        //                 any(Instant.class)
-        //         );
-        // }
         @Test
         void deleteAlertTest() throws Exception {
                 mockMvc.perform(delete("/alerts/delete")
