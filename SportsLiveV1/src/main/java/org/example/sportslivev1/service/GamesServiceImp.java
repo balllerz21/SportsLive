@@ -51,7 +51,6 @@ public class GamesServiceImp implements GamesService {
         return gamesRepo.findByStatus(stat);
     }
 
-    // Why do we need this? If we have createGame which does the same thing minus the Game thing on top
     @Transactional
     public void saveGame(Games game) {
         gamesRepo.save(game);
