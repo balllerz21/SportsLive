@@ -45,7 +45,7 @@ public class AlertsServiceImp implements AlertsService {
         }
         else 
         {
-            throw new IllegalArgumentException("Wrong Fields for Alert.");
+            throw new IllegalArgumentException("Game ID not found");
         }
     }
 
@@ -66,11 +66,6 @@ public class AlertsServiceImp implements AlertsService {
         }
         return (List<Alerts>) alertsRepo.findAll(spec);
     }
-    // public List<Alerts> getAllAlerts()
-    // {
-    //     return (List<Alerts>) alertsRepo.findAll();
-    // }
-
     @Override
     public Alerts getAlertById(Long id) {
         Optional<Alerts> alert = alertsRepo.findById(id);
@@ -80,7 +75,6 @@ public class AlertsServiceImp implements AlertsService {
         {
             throw new EntityNotFoundException("Alert ID not found");
         }
-
 
     }
     @Override
@@ -116,7 +110,6 @@ public class AlertsServiceImp implements AlertsService {
         alertsRepo.deleteById(id);
     }
 
-    // Why is this marked as Transactional?
     // Fix: should check by alert status not by game
     @Transactional
     public void updateAlertsStatus(Alerts.AlertStatus stat) {

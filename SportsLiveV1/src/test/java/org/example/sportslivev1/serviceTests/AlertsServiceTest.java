@@ -105,11 +105,11 @@ public class AlertsServiceTest {
             Games.Status.FINAL,
             Instant.parse("2026-04-18T02:00:00Z"));
         test.setId(id);
-        when(gamesRepo.findById(id)).thenThrow(new IllegalArgumentException("Wrong Fields For Alert."));
+        when(gamesRepo.findById(id)).thenThrow(new IllegalArgumentException("Game ID not found"));
         Throwable exception = assertThrows(RuntimeException.class, () -> {
             alertsService.createAlert(test, "Phoenix Suns", Alerts.AlertType.SCORE_OVER, 120);
         });
-        assertEquals("Wrong Fields For Alert.", exception.getMessage());
+        assertEquals("Game ID not found", exception.getMessage());
         verify(alertsRepo, times(0)).save(any(Alerts.class));
         verify(gamesRepo).findById(id);
     }
