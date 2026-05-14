@@ -17,5 +17,6 @@ public interface AlertsService {
     List<Alerts> getAlertsByStatus(Alerts.AlertStatus status);
     List<Alerts> getAlertsByCreatedAt(Instant createdAt);
     List<Alerts> getAlertsByTypeAndTeam(String team, Alerts.AlertType type);
+    List<Alerts> getAlertsByStatusAndNotificationReady(Alerts.AlertStatus stat, boolean isNotification, Instant notifiedAt);
     void deleteAlert(Long id);
 }

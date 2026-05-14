@@ -13,10 +13,15 @@ import org.example.sportslivev1.entity.Alerts.AlertType;
 import org.example.sportslivev1.entity.Games;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import jakarta.persistence.EntityNotFoundException;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,11 +30,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import javax.swing.text.html.parser.Entity;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-// add error handiling w exceptions
 @RestController
 @RequestMapping("/alerts")
 public class AlertsController {
@@ -41,44 +48,41 @@ public class AlertsController {
     
     @PostMapping("/add")
     public ResponseEntity<AlertResponse> add(@RequestBody AlertsRequest alert) {
-        Alerts a = service.createAlert(
-            service2.getGameById(alert.getGameId()),
-            alert.getTeamName(),
-            alert.getAlertType(),
-            alert.getTargetVal()
-        );
+        try{
+            Alerts a = service.createAlert(
+                service2.getGameById(alert.getGameId()),
+                alert.getTeamName(),
+                alert.getAlertType(),
+                alert.getTargetVal()
+            );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(AlertMapper.toResponse(a));
-
+            return ResponseEntity.status(HttpStatus.CREATED).body(AlertMapper.toResponse(a));
+        }
+        catch (Exception e)
+        {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "Game ID not found");
+        }
     }
     
     @GetMapping
-    public List<AlertResponse> getAllAlerts(@RequestParam(required = false) String team, @RequestParam(required = false) AlertType type, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) Instant date) {
+    public List<AlertResponse> getAllAlerts(@RequestParam(required = false) String teamName, @RequestParam(required = false) AlertType alertType, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) Instant createdAt) {
         List<Alerts> alerts;
-        alerts = service.getAllAlerts(status, type, team, date);
+        alerts = service.getAllAlerts(status, alertType, teamName, createdAt);
         return alerts.stream().map(AlertMapper::toResponse).toList();
     }
     @GetMapping("/{id}")
     public ResponseEntity<AlertResponse> alertById(@PathVariable Long id) {
-        Alerts alert = service.getAlertById(id);
-        return ResponseEntity.ok(AlertMapper.toResponse(alert));
+        try {
+            return ResponseEntity.ok(AlertMapper.toResponse(service.getAlertById(id)));
+        }
+        catch (EntityNotFoundException e)
+        {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "entity not found"
+            );
+        }
+
     }
-    // @GetMapping("/team")
-    // public List<Alerts> alertsByTeam(@RequestParam String team) {
-    //     return service.getAlertsByTeamName(team);
-    // }
-    // @GetMapping("/status")
-    // public List<Alerts> alertsByStatus(@RequestParam boolean status) {
-    //     return service.getAlertsByisActive(status);
-    // }
-    // @GetMapping("/time")
-    // public List<Alerts> alertsByDate(@RequestParam LocalDateTime time) {
-    //     return service.getAlertsByTime(time);
-    // }
-    // @GetMapping("/type")
-    // public List<Alerts> alertsByType(@RequestParam AlertType type) {
-    //     return service.getAlertsByAlertType(type);
-    // }
     @DeleteMapping("/delete")
     public void delete(@RequestParam Long id){
         service.deleteAlert(id);

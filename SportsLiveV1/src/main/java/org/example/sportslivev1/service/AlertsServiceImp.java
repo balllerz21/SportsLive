@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityNotFoundException;
 
 import java.time.Instant;
-import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,7 +45,7 @@ public class AlertsServiceImp implements AlertsService {
         }
         else 
         {
-            throw new IllegalArgumentException("Wrong Fields for Alert.");
+            throw new IllegalArgumentException("Game ID not found");
         }
     }
 
@@ -66,11 +66,6 @@ public class AlertsServiceImp implements AlertsService {
         }
         return (List<Alerts>) alertsRepo.findAll(spec);
     }
-    public List<Alerts> getAllAlerts()
-    {
-        return (List<Alerts>) alertsRepo.findAll();
-    }
-
     @Override
     public Alerts getAlertById(Long id) {
         Optional<Alerts> alert = alertsRepo.findById(id);
@@ -80,7 +75,6 @@ public class AlertsServiceImp implements AlertsService {
         {
             throw new EntityNotFoundException("Alert ID not found");
         }
-
 
     }
     @Override
@@ -115,14 +109,19 @@ public class AlertsServiceImp implements AlertsService {
     public void deleteAlert(Long id) {
         alertsRepo.deleteById(id);
     }
+    @Override
+    public List<Alerts> getAlertsByStatusAndNotificationReady(Alerts.AlertStatus stat, boolean isNotification, Instant notifiedAt)
+    {
+        return alertsRepo.findByStatusAndIsNotificationAndNotifiedAt(stat, isNotification, notifiedAt);
+    }
 
-    // Why is this marked as Transactional?
     // Fix: should check by alert status not by game
     @Transactional
-    public void updateAlertsStatus(Alerts.AlertStatus stat) {
+    public List<Alerts> updateAlertsStatus(Alerts.AlertStatus stat) {
         List<Alerts> alerts = alertsRepo.findByStatus(stat);
+        List<Alerts> triggered = new ArrayList<Alerts>();
         if (alerts.isEmpty()) {
-            return;
+            return new ArrayList<Alerts>();
         }
         for (Alerts a : alerts) {
             String alertTeam = a.getTeamName();
@@ -143,12 +142,16 @@ public class AlertsServiceImp implements AlertsService {
                     if (score >= a.getTargetVal()) {
                         a.setAlertStatus(AlertStatus.TRIGGERED);
                         a.setTriggeredAt(Instant.now());
+                        a.setIsNotification(true);
+                        triggered.add(a);
                     }
                 } else if (type == Alerts.AlertType.SCORE_UNDER) {
                     if (game.getStatus() == Games.Status.FINAL &&
                         score <= a.getTargetVal()) {
                         a.setAlertStatus(AlertStatus.TRIGGERED);
                         a.setTriggeredAt(Instant.now());
+                        a.setIsNotification(true);
+                        triggered.add(a);
                     }
                 }
             }
@@ -158,5 +161,6 @@ public class AlertsServiceImp implements AlertsService {
                 }
             }
         }
+        return triggered;
     }
 }

@@ -34,3 +34,7 @@ build/
 
 ### env ###
 .env
+
+### admin files ###
+*.md
+!README.md

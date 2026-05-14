@@ -38,7 +38,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.EntityNotFoundException;
 
-// TODO: Add Alerts test for edited getAllAlerts()
 
 @ExtendWith(MockitoExtension.class)
 public class AlertsServiceTest {
@@ -105,27 +104,27 @@ public class AlertsServiceTest {
             Games.Status.FINAL,
             Instant.parse("2026-04-18T02:00:00Z"));
         test.setId(id);
-        when(gamesRepo.findById(id)).thenThrow(new IllegalArgumentException("Wrong Fields For Alert."));
+        when(gamesRepo.findById(id)).thenThrow(new IllegalArgumentException("Game ID not found"));
         Throwable exception = assertThrows(RuntimeException.class, () -> {
             alertsService.createAlert(test, "Phoenix Suns", Alerts.AlertType.SCORE_OVER, 120);
         });
-        assertEquals("Wrong Fields For Alert.", exception.getMessage());
+        assertEquals("Game ID not found", exception.getMessage());
         verify(alertsRepo, times(0)).save(any(Alerts.class));
         verify(gamesRepo).findById(id);
     }
     // old getAllAlerts
-    @Test 
-    public void getAllAlertsTest()
-    {
-        Alerts a1 = buildAlerts();
-        Alerts a2 = new Alerts(a1.getGame(), "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 100);
-        when(alertsRepo.findAll()).thenReturn(List.of(a1, a2));
-        List<Alerts> listAleerts = alertsService.getAllAlerts();
+    // @Test 
+    // public void getAllAlertsTest()
+    // {
+    //     Alerts a1 = buildAlerts();
+    //     Alerts a2 = new Alerts(a1.getGame(), "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 100);
+    //     when(alertsRepo.findAll()).thenReturn(List.of(a1, a2));
+    //     List<Alerts> listAleerts = alertsService.getAllAlerts();
 
-        assertEquals(2, listAleerts.size());
-        assertEquals(a1, listAleerts.get(0));
-        assertEquals(a2, listAleerts.get(1));
-    }
+    //     assertEquals(2, listAleerts.size());
+    //     assertEquals(a1, listAleerts.get(0));
+    //     assertEquals(a2, listAleerts.get(1));
+    // }
     // testing some ways a query can be ran w Specifications
     @Test
     public void getAlertsSpecifications()
@@ -138,6 +137,38 @@ public class AlertsServiceTest {
         assertEquals(2, listAlerts.size());
         assertEquals(a1, listAlerts.get(0));
         assertEquals(a2, listAlerts.get(1));
+    }
+    @Test
+    public void getAlertsSpecificationsTest2()
+    {
+        Alerts a1 = buildAlerts();
+        a1.setAlertStatus(Alerts.AlertStatus.TRIGGERED);
+        Alerts a2 = new Alerts(a1.getGame(), "Golden State Warriors", Alerts.AlertType.SCORE_UNDER, 100);
+        a2.setAlertStatus(Alerts.AlertStatus.TRIGGERED);
+
+        when(alertsRepo.findAll(any(Specification.class))).thenReturn(List.of(a1, a2)).thenReturn(List.of(a1, a2)).thenReturn(List.of(a2)).thenReturn(List.of(a1));
+
+        // testing instant / date query
+        List<Alerts> listAlertsDate = alertsService.getAllAlerts(null, null, null, Instant.parse("2026-04-18T02:00:00Z"));
+        assertEquals(2, listAlertsDate.size());
+        assertEquals(a1, listAlertsDate.get(0));
+        assertEquals(a2, listAlertsDate.get(1));
+        // testing status query 
+        List<Alerts> listAlertsStatus = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, null, null, null);
+        assertEquals(2, listAlertsStatus.size());
+        assertEquals(a1, listAlertsStatus.get(0));
+        assertEquals(a2, listAlertsStatus.get(1));
+        // testing status + type query
+        List<Alerts> listAlertsUnder = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_UNDER, null, null);
+        assertEquals(1, listAlertsUnder.size());
+        assertEquals(a2, listAlertsUnder.get(0));
+        List<Alerts> listAlertsOver = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, null, null);
+        assertEquals(1, listAlertsUnder.size());
+        assertEquals(a1, listAlertsOver.get(0));        
+        // testing status + type + team query
+        List<Alerts> listsAlertsMix = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Phoenix Suns", null);
+        assertEquals(1, listsAlertsMix.size());
+        assertEquals(a1, listsAlertsMix.get(0));
     }
     @Test
     public void getAlertsByIdTest1()

@@ -5,6 +5,7 @@ import java.util.List;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Games;
 import org.example.sportslivev1.entity.Alerts.AlertStatus;
+import org.example.sportslivev1.serversideevents.SSERegistry;
 import org.example.sportslivev1.service.AlertsServiceImp;
 import org.example.sportslivev1.service.GamesService;
 import org.example.sportslivev1.service.GamesServiceImp;
@@ -19,14 +20,15 @@ public class Scheduler {
     AlertsServiceImp alertsService;
     @Autowired
     PollingService pollingService;
+    @Autowired
+    SSERegistry sseRegistry;
 
     @Scheduled(fixedRate = 60000)
     public void scheduleLive() {
         pollingService.createOrUpdateGame();
-        Alerts.AlertStatus type1 = Alerts.AlertStatus.CREATED;
-        Alerts.AlertStatus type2 = Alerts.AlertStatus.TRIGGERED;
-        alertsService.updateAlertsStatus(type1);
-        alertsService.updateAlertsStatus(type2);
+        List<Alerts> newlyTriggered = alertsService.updateAlertsStatus(AlertStatus.CREATED);
+        alertsService.updateAlertsStatus(AlertStatus.TRIGGERED); 
+        newlyTriggered.forEach(sseRegistry::broadcast);
     }
 
 }

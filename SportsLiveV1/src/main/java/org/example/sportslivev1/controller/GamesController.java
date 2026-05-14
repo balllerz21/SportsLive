@@ -11,7 +11,10 @@ import org.example.sportslivev1.dto.GameResponse;
 import org.example.sportslivev1.dto.GameDetailResponse;
 import org.example.sportslivev1.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,8 +23,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-
-
 
 
 @RestController
@@ -39,9 +40,15 @@ public class GamesController {
     }
 
     @GetMapping("/{id}")
-    public GameDetailResponse getGameById(@PathVariable Long id) {
-        Games game = serviceGame.getGameById(id);
-        return GameMapper.toDetailResponse(game);
+    public ResponseEntity<GameDetailResponse> getGameById(@PathVariable Long id) {
+        try {
+            Games game = serviceGame.getGameById(id);
+            return ResponseEntity.status(HttpStatus.OK).body(GameMapper.toDetailResponse(game));
+        } 
+        catch (Exception e)
+        {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game ID not found.");
+        }
     }
     
     
