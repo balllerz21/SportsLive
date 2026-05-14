@@ -1,7 +1,8 @@
 package org.example.sportslivev1.dto;
 
 import java.time.Instant;
-// TODO: Add list of alerts 
+// NO: Add list of alerts 
+// It will get too messy in the main page
 public class GameResponse {
     private Long id;
     private String actualGameId;

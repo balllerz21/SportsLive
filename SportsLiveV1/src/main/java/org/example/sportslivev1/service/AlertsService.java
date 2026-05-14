@@ -9,8 +9,8 @@ import java.time.Instant;
 import java.util.List;
 
 public interface AlertsService {
-    void createAlert(Games game, String teamName, Alerts.AlertType alertType, int targetValt);
-    List<Alerts> getAllAlerts();
+    Alerts createAlert(Games game, String teamName, Alerts.AlertType alertType, int targetValt);
+    List<Alerts> getAllAlerts(Alerts.AlertStatus status, Alerts.AlertType type, String team, Instant date);
     Alerts getAlertById(Long id);
     List<Alerts> getAlertsByTeamName(String teamName);
     List<Alerts> getAlertsByAlertType(Alerts.AlertType alertType);

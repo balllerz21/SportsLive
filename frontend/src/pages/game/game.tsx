@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+type GameStatus = 'SCHEDULED' | 'LIVE' | 'FINAL';
 type Game = {
     id: number;
     homeTeam : string;
@@ -7,12 +8,12 @@ type Game = {
     awayTeam : string;
     awayScore : number;
     schedTime : any;
-    status : string;
+    status : GameStatus
   }
 
 async function getAllgames() : Promise<Game[]>
 {
-  const res = await fetch("http://localhost:8080/games?status=LIVE&status=SCHEDULED");
+  const res = await fetch("http://localhost:8080/games");
 
   if (!res.ok) {
     throw new Error("Failed to fetch games");
@@ -21,11 +22,12 @@ async function getAllgames() : Promise<Game[]>
   const games: Game[] = await res.json();
   return games;
 }
-
+type FilterStatus = GameStatus | 'ALL';
 function GamesPage() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>('ALL');
   useEffect(() => {
     async function loadGames() {
       try {
@@ -70,14 +72,23 @@ function GamesPage() {
     return () => clearInterval(intervalId); 
   }, []); 
 
-
+  const gamesFiltered = statusFilter === 'ALL' ? games : games.filter(g => g.status === statusFilter);
   if (loading) return <div>Loading games...</div>;
-  if (error) return <div>{error}</div>;
+  if (error) return <div>{error || "Games failed to load..."}</div>;
 
   return (
     <div>
       <h1>Dashboard</h1>
-      {games.map((game) => (
+      <button onClick={() => setStatusFilter("SCHEDULED")}>
+        Scheduled
+      </button>
+      <button onClick={() => setStatusFilter("LIVE")}>
+        Live
+      </button>
+      <button onClick={() => setStatusFilter("FINAL")}>
+        Final
+      </button>
+      {gamesFiltered.map((game) => (
         <div key={game.id}>
           <p>
             {game.awayTeam} {game.awayScore} - {game.homeTeam} {game.homeScore}
@@ -86,6 +97,9 @@ function GamesPage() {
           <p>{game.schedTime}</p>
           <Link to={`/games/${game.id}`}>
             <button>View Game</button>
+          </Link>
+          <Link to={`/alerts/`}>
+
           </Link>
         </div>
       ))}
