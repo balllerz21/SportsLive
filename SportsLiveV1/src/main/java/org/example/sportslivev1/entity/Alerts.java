@@ -40,6 +40,9 @@ public class Alerts {
     private AlertStatus status;
     private Instant createdAt;
     private Instant triggeredAt;
+    private Instant notifiedAt;
+    private boolean isNotification;
+
 
     protected Alerts() {}
     public Alerts(Games game, String teamName, AlertType alertType, int targetVal) {
@@ -49,6 +52,8 @@ public class Alerts {
         this.targetVal = targetVal;
         this.status = AlertStatus.CREATED;
         this.createdAt = Instant.now();
+        this.notifiedAt = null;
+        this.isNotification = false;
     }
 
     // getters
@@ -77,6 +82,14 @@ public class Alerts {
     public Games getGame()
     {
         return game;
+    }
+    public Instant getNotifiedAt()
+    {
+        return notifiedAt;
+    }
+    public boolean getIsNotification()
+    {
+        return isNotification;
     }
 
     // setters
@@ -111,6 +124,14 @@ public class Alerts {
     public void setGame(Games g)
     {
         this.game = g;
+    }
+    public void setNotifiedAt(Instant notifiedAt)
+    {
+        this.notifiedAt = notifiedAt;
+    }
+    public void setIsNotification(boolean isNotification)
+    {
+        this.isNotification = isNotification;
     }
 
 }

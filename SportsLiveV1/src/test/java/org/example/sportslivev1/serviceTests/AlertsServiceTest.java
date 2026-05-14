@@ -38,7 +38,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.EntityNotFoundException;
 
-// DONE: Add Alerts test for edited getAllAlerts()
 
 @ExtendWith(MockitoExtension.class)
 public class AlertsServiceTest {
