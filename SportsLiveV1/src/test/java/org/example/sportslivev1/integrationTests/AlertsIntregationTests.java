@@ -8,11 +8,14 @@ import org.example.sportslivev1.controller.AlertsController;
 import org.example.sportslivev1.dto.AlertsRequest;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Alerts.AlertStatus;
+import org.example.sportslivev1.entity.Users;
+import org.example.sportslivev1.repository.UsersRepo;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -33,6 +36,7 @@ import jakarta.servlet.ServletContext;
 import tools.jackson.databind.ObjectMapper;
 
 @ExtendWith(SpringExtension.class)
+@AutoConfigureMockMvc(addFilters = false)
 @ContextConfiguration(classes = { DemoApplication.class })
 @WebAppConfiguration
 
@@ -40,6 +44,8 @@ public class AlertsIntregationTests {
     @Autowired
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
+    @Autowired
+    private UsersRepo usersRepository;
     @BeforeEach
     public void setup() throws Exception {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.webApplicationContext).build();
@@ -125,9 +131,12 @@ public class AlertsIntregationTests {
     @Test 
     public void createAlertTest() throws Exception
     {
+        Users user = new Users("testuser", "password", Users.UserRole.USER);
+        user = usersRepository.save(user);
         // making the request body
         AlertsRequest res = new AlertsRequest();
         res.setGameId(1555l);
+        res.setUserId(user.getId());
         res.setTeamName("San Antonio Spurs");
         res.setAlertType(Alerts.AlertType.SCORE_OVER);
         res.setTargetVal(100);

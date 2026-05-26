@@ -24,4 +24,5 @@ public interface AlertsRepo extends JpaRepository<Alerts, Long>, JpaSpecificatio
     List<Alerts> findByAlertTypeAndTargetVal(Alerts.AlertType type, int targetVal);
     List<Alerts> findByTeamNameAndAlertType(String team, Alerts.AlertType type);
     List<Alerts> findByGame_Id(Long gameId);
+    List<Alerts> findByStatusAndIsNotificationAndNotifiedAt(Alerts.AlertStatus stat, boolean isNotification, Instant notifiedAt);
 }

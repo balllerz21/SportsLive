@@ -21,7 +21,9 @@ public class Alerts {
     @ManyToOne
     @JoinColumn(name = "game_id")
     private Games game;
-
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private Users user;
     private String teamName;
    
     public enum AlertType {
@@ -40,6 +42,9 @@ public class Alerts {
     private AlertStatus status;
     private Instant createdAt;
     private Instant triggeredAt;
+    private Instant notifiedAt;
+    private boolean isNotification;
+
 
     protected Alerts() {}
     public Alerts(Games game, String teamName, AlertType alertType, int targetVal) {
@@ -49,6 +54,8 @@ public class Alerts {
         this.targetVal = targetVal;
         this.status = AlertStatus.CREATED;
         this.createdAt = Instant.now();
+        this.notifiedAt = null;
+        this.isNotification = false;
     }
 
     // getters
@@ -78,7 +85,18 @@ public class Alerts {
     {
         return game;
     }
-
+    public Instant getNotifiedAt()
+    {
+        return notifiedAt;
+    }
+    public boolean getIsNotification()
+    {
+        return isNotification;
+    }
+    public Users getUser()
+    {
+        return user;
+    }
     // setters
      public void setId(Long id)
     {
@@ -112,5 +130,16 @@ public class Alerts {
     {
         this.game = g;
     }
-
+    public void setNotifiedAt(Instant notifiedAt)
+    {
+        this.notifiedAt = notifiedAt;
+    }
+    public void setIsNotification(boolean isNotification)
+    {
+        this.isNotification = isNotification;
+    }
+    public void setUser(Users user)
+    {
+        this.user = user;
+    }
 }

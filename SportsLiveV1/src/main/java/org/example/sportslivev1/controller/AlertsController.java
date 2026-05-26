@@ -3,6 +3,7 @@ package org.example.sportslivev1.controller;
 import org.example.sportslivev1.repository.AlertsRepo;
 import org.example.sportslivev1.service.AlertsServiceImp;
 import org.example.sportslivev1.service.GamesServiceImp;
+import org.example.sportslivev1.service.UsersServiceImpl;
 import org.example.sportslivev1.specifications.AlertsSpecifications;
 import org.example.sportslivev1.dto.AlertMapper;
 import org.example.sportslivev1.dto.AlertResponse;
@@ -37,7 +38,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-// add error handiling w exceptions
 @RestController
 @RequestMapping("/alerts")
 public class AlertsController {
@@ -46,12 +46,15 @@ public class AlertsController {
     AlertsServiceImp service;
     @Autowired
     GamesServiceImp service2;
+    @Autowired
+    UsersServiceImpl service3;
     
     @PostMapping("/add")
     public ResponseEntity<AlertResponse> add(@RequestBody AlertsRequest alert) {
         try{
             Alerts a = service.createAlert(
                 service2.getGameById(alert.getGameId()),
+                service3.getUserById(alert.getUserId()),
                 alert.getTeamName(),
                 alert.getAlertType(),
                 alert.getTargetVal()
@@ -66,11 +69,18 @@ public class AlertsController {
     }
     
     @GetMapping
-    public List<AlertResponse> getAllAlerts(@RequestParam(required = false) String teamName, @RequestParam(required = false) AlertType alertType, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) Instant createdAt) {
-        List<Alerts> alerts;
-        alerts = service.getAllAlerts(status, alertType, teamName, createdAt);
-        return alerts.stream().map(AlertMapper::toResponse).toList();
+    public ResponseEntity<List<AlertResponse>> getAllAlerts(@RequestParam(required = false) String teamName, @RequestParam(required = false) AlertType alertType, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) String period) {
+        try {
+            List<Alerts> alerts;
+            alerts = service.getAllAlerts(status, alertType, teamName, period);
+            return ResponseEntity.ok(alerts.stream().map(AlertMapper::toResponse).toList());
+        }
+        catch (Exception e)
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid query parameters");
+        }
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<AlertResponse> alertById(@PathVariable Long id) {
         try {

@@ -26,4 +26,10 @@ public class AlertsSpecifications {
     {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("createdAt"), date);
     }
+    // user can search by created date range
+    public static Specification<Alerts> hasDateRange(Instant date1, Instant date2)
+    {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.between(root.get("createdAt"), date1, date2);
+    }
+
 }
