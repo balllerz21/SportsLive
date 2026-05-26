@@ -21,7 +21,9 @@ public class Alerts {
     @ManyToOne
     @JoinColumn(name = "game_id")
     private Games game;
-
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private Users user;
     private String teamName;
    
     public enum AlertType {
@@ -91,7 +93,10 @@ public class Alerts {
     {
         return isNotification;
     }
-
+    public Users getUser()
+    {
+        return user;
+    }
     // setters
      public void setId(Long id)
     {
@@ -133,5 +138,8 @@ public class Alerts {
     {
         this.isNotification = isNotification;
     }
-
+    public void setUser(Users user)
+    {
+        this.user = user;
+    }
 }

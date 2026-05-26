@@ -14,25 +14,34 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.util.List;
 
+import org.example.sportslivev1.auth.AuthEntryPointJwt;
+import org.example.sportslivev1.auth.AuthTokenFilter;
 import org.example.sportslivev1.controller.AlertsController;
 import org.example.sportslivev1.dto.AlertsRequest;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Games;
+import org.example.sportslivev1.entity.Users;
+import org.example.sportslivev1.entity.Users.UserRole;
 import org.example.sportslivev1.service.AlertsServiceImp;
 import org.example.sportslivev1.service.GamesServiceImp;
+import org.example.sportslivev1.service.UsersServiceImpl;
+import org.example.sportslivev1.utils.JwtUtilities;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(AlertsController.class)
+@AutoConfigureMockMvc(addFilters = false)
 public class AlertsControllerTest {
         @Autowired
         private MockMvc mockMvc;
@@ -45,11 +54,22 @@ public class AlertsControllerTest {
 
         @MockitoBean
         private GamesServiceImp gamesService;
+        @MockitoBean
+        private UsersServiceImpl usersService;
 
+        @MockitoBean
+        private JwtUtilities jwtUtilities;
+        @MockitoBean
+        private BCryptPasswordEncoder passwordEncoder;
+        @MockitoBean
+        private AuthTokenFilter authTokenFilter;
+        @MockitoBean
+        private AuthEntryPointJwt authEntryPointJwt;
         @Test
         void addAlertTest() throws Exception {
                 AlertsRequest req = new AlertsRequest();
                 req.setGameId(902L);
+                req.setUserId(1L);
                 req.setTeamName("Charlotte Hornets");
                 req.setAlertType(Alerts.AlertType.SCORE_OVER);
                 req.setTargetVal(126);
@@ -63,13 +83,18 @@ public class AlertsControllerTest {
                         Games.Status.FINAL,
                         Instant.parse("2026-04-18T02:00:00Z")
                 );
+                Users user = new Users("testuser", "password", UserRole.USER);
+                user.setId(1L);
+
                 game.setId(902L);
                 Alerts savedAlert = new Alerts(game, "Charlotte Hornets", Alerts.AlertType.SCORE_OVER, 126);
-                savedAlert.setId(1L);
+                savedAlert.setUser(user);
 
                 when(gamesService.getGameById(902L)).thenReturn(game);
+                when(usersService.getUserById(1L)).thenReturn(user);
                 when(alertsService.createAlert(
                         same(game),
+                        same(user),
                         eq("Charlotte Hornets"),
                         eq(Alerts.AlertType.SCORE_OVER),
                         eq(126)
@@ -83,6 +108,7 @@ public class AlertsControllerTest {
                 verify(gamesService).getGameById(902L);
                 verify(alertsService).createAlert(
                         same(game),
+                        same(user),
                         eq("Charlotte Hornets"),
                         eq(Alerts.AlertType.SCORE_OVER),
                         eq(126)
@@ -176,7 +202,7 @@ public class AlertsControllerTest {
         Alerts a2 = new Alerts(game, "Phoenix Suns", Alerts.AlertType.SCORE_UNDER, 105);
         a2.setId(2L);
 
-        when(alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, null, null, null)).thenReturn(List.of(a1));
+        when(alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, null, null,  null)).thenReturn(List.of(a1));
         mockMvc.perform(get("/alerts?status=TRIGGERED")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -244,9 +270,63 @@ public class AlertsControllerTest {
                         .andExpect(jsonPath("$[0].alertType").value("SCORE_OVER"))
                         .andExpect(jsonPath("$[0].targetVal").value(120));
 
-                verify(alertsService).getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors", null);
+                verify(alertsService).getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors",  null);
         }
+        @Test
+        void getAllAlertsTest5() throws Exception
+        {
+                Games game = new Games(
+                "401866759",
+                "Phoenix Suns",
+                "Golden State Warriors",
+                111,
+                96,
+                Games.Status.FINAL,
+                Instant.parse("2026-04-18T02:00:00Z")
+                );
+                game.setId(204L);
 
+                Alerts a1 = new Alerts(game, "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 120);
+                a1.setId(1L);
+                a1.setAlertStatus(Alerts.AlertStatus.TRIGGERED);
+                a1.setCreatedAt(Instant.parse("2026-04-18T02:00:00Z"));
+
+                when(alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors", "weekly")).thenReturn(List.of(a1));
+                mockMvc.perform(get("/alerts?status=TRIGGERED&alertType=SCORE_OVER&teamName=Golden State Warriors&period=weekly")
+                        .accept(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$[0].id").value(1))
+                        .andExpect(jsonPath("$[0].teamName").value("Golden State Warriors"))
+                        .andExpect(jsonPath("$[0].alertType").value("SCORE_OVER"))
+                        .andExpect(jsonPath("$[0].targetVal").value(120));
+
+                verify(alertsService).getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors",  "weekly");
+        }
+        @Test
+        void getAllAlertsTestErrorInvalidTimeframeParam() throws Exception
+        {
+                Games game = new Games(
+                "401866759",
+                "Phoenix Suns",
+                "Golden State Warriors",
+                111,
+                96,
+                Games.Status.FINAL,
+                Instant.parse("2026-04-18T02:00:00Z")
+                );
+                game.setId(204L);
+
+                Alerts a1 = new Alerts(game, "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 120);
+                a1.setId(1L);
+                a1.setAlertStatus(Alerts.AlertStatus.TRIGGERED);
+                a1.setCreatedAt(Instant.parse("2026-04-18T02:00:00Z"));
+
+                when(alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors", "hello")).thenThrow(new IllegalArgumentException("Invalid timeframe format. Use formats like 'daily', 'weekly', 'monthly', or 'yearly'."));
+                mockMvc.perform(get("/alerts?status=TRIGGERED&alertType=SCORE_OVER&teamName=Golden State Warriors&period=hello")
+                        .accept(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isBadRequest());
+                verify(alertsService).getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors", "hello");
+        }
         @Test
         void deleteAlertTest() throws Exception {
                 mockMvc.perform(delete("/alerts/delete")

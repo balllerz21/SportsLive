@@ -7,13 +7,16 @@ public class AlertsRequest {
     private String teamName;
     private Alerts.AlertType alertType;
     private int targetVal;
+    private Long userId;
 
     public AlertsRequest() {}
 
     public Long getGameId() {
         return gameId;
     }
-
+    public Long getUserId() {
+        return userId;
+    }
     public void setGameId(Long gameId) {
         this.gameId = gameId;
     }
@@ -40,5 +43,8 @@ public class AlertsRequest {
 
     public void setTargetVal(int targetVal) {
         this.targetVal = targetVal;
+    }
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }

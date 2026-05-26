@@ -11,6 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -21,18 +22,23 @@ import java.util.Optional;
 
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Games;
+import org.example.sportslivev1.entity.Users;
 import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.example.sportslivev1.entity.Alerts.AlertType;
+import org.example.sportslivev1.entity.Users.UserRole;
 import org.example.sportslivev1.repository.AlertsRepo;
 import org.example.sportslivev1.repository.GamesRepo;
+import org.example.sportslivev1.repository.UsersRepo;
 import org.example.sportslivev1.service.AlertsService;
 import org.example.sportslivev1.service.AlertsServiceImp;
+import org.example.sportslivev1.utils.Utilities;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -49,6 +55,8 @@ public class AlertsServiceTest {
 
     @Mock
     private GamesRepo gamesRepo;
+    @Mock
+    private UsersRepo usersRepo;
 
     @InjectMocks
     private AlertsServiceImp alertsService;
@@ -76,10 +84,12 @@ public class AlertsServiceTest {
             110,
             Games.Status.FINAL,
             Instant.parse("2026-04-18T02:00:00Z"));
+        Users user = new Users("testuser", "password", UserRole.USER);
         test.setId(id);
+        user.setId(id);
         when(gamesRepo.findById(id)).thenReturn(Optional.of(test));
-
-        alertsService.createAlert(test, "Phoenix Suns", Alerts.AlertType.SCORE_OVER, 120);
+        when(usersRepo.findById(id)).thenReturn(Optional.of(user));
+        alertsService.createAlert(test, user, "Phoenix Suns", Alerts.AlertType.SCORE_OVER, 120);
 
         ArgumentCaptor<Alerts> alerts_dets = ArgumentCaptor.forClass(Alerts.class);
         verify(alertsRepo).save(alerts_dets.capture());
@@ -104,27 +114,38 @@ public class AlertsServiceTest {
             Games.Status.FINAL,
             Instant.parse("2026-04-18T02:00:00Z"));
         test.setId(id);
+        Users user = new Users("testuser", "password", UserRole.USER);
+        user.setId(id);
         when(gamesRepo.findById(id)).thenThrow(new IllegalArgumentException("Game ID not found"));
         Throwable exception = assertThrows(RuntimeException.class, () -> {
-            alertsService.createAlert(test, "Phoenix Suns", Alerts.AlertType.SCORE_OVER, 120);
+            alertsService.createAlert(test, user, "Phoenix Suns", Alerts.AlertType.SCORE_OVER, 120);
         });
         assertEquals("Game ID not found", exception.getMessage());
         verify(alertsRepo, times(0)).save(any(Alerts.class));
         verify(gamesRepo).findById(id);
     }
-    // old getAllAlerts
-    // @Test 
-    // public void getAllAlertsTest()
-    // {
-    //     Alerts a1 = buildAlerts();
-    //     Alerts a2 = new Alerts(a1.getGame(), "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 100);
-    //     when(alertsRepo.findAll()).thenReturn(List.of(a1, a2));
-    //     List<Alerts> listAleerts = alertsService.getAllAlerts();
-
-    //     assertEquals(2, listAleerts.size());
-    //     assertEquals(a1, listAleerts.get(0));
-    //     assertEquals(a2, listAleerts.get(1));
-    // }
+    @Test
+    public void createAlertTest3() {
+        Long id = 1L;
+        Games test = new Games("401866759",
+            "Phoenix Suns",
+            "Golden State Warriors",
+            121,
+            110,
+            Games.Status.FINAL,
+            Instant.parse("2026-04-18T02:00:00Z"));
+        test.setId(id);
+        Users user = new Users("testuser", "password", UserRole.USER);
+        user.setId(id);
+        when(gamesRepo.findById(id)).thenReturn(Optional.of(test));
+        when(usersRepo.findById(id)).thenThrow(new IllegalArgumentException("User ID not found"));
+        Throwable exception = assertThrows(RuntimeException.class, () -> {
+            alertsService.createAlert(test, user, "Phoenix Suns", Alerts.AlertType.SCORE_OVER, 120);
+        });
+        assertEquals("User ID not found", exception.getMessage());
+        verify(alertsRepo, times(0)).save(any(Alerts.class));
+        verify(gamesRepo).findById(id);
+    }
     // testing some ways a query can be ran w Specifications
     @Test
     public void getAlertsSpecifications()
@@ -148,8 +169,8 @@ public class AlertsServiceTest {
 
         when(alertsRepo.findAll(any(Specification.class))).thenReturn(List.of(a1, a2)).thenReturn(List.of(a1, a2)).thenReturn(List.of(a2)).thenReturn(List.of(a1));
 
-        // testing instant / date query
-        List<Alerts> listAlertsDate = alertsService.getAllAlerts(null, null, null, Instant.parse("2026-04-18T02:00:00Z"));
+        // testing date query
+        List<Alerts> listAlertsDate = alertsService.getAllAlerts(null, null, null, "weekly");
         assertEquals(2, listAlertsDate.size());
         assertEquals(a1, listAlertsDate.get(0));
         assertEquals(a2, listAlertsDate.get(1));
@@ -163,13 +184,23 @@ public class AlertsServiceTest {
         assertEquals(1, listAlertsUnder.size());
         assertEquals(a2, listAlertsUnder.get(0));
         List<Alerts> listAlertsOver = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, null, null);
-        assertEquals(1, listAlertsUnder.size());
+        assertEquals(1, listAlertsOver.size());
         assertEquals(a1, listAlertsOver.get(0));        
         // testing status + type + team query
         List<Alerts> listsAlertsMix = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Phoenix Suns", null);
         assertEquals(1, listsAlertsMix.size());
         assertEquals(a1, listsAlertsMix.get(0));
     }
+    @Test
+    public void getAlertsSpecificationsTest3() {
+        MockedStatic<Utilities> utilitiesMock = mockStatic(Utilities.class);
+        utilitiesMock.when(() -> Utilities.convertToInstant("hello")).thenThrow(new IllegalArgumentException("Invalid date format. Please provide a valid timeframe keyword."));
+        Throwable exception = assertThrows(IllegalArgumentException.class, () -> {
+            alertsService.getAllAlerts(null, null, null, "hello");
+        });
+        assertEquals("Invalid timeframe format. Use formats like 'daily', 'weekly', 'monthly', or 'yearly'.", exception.getMessage());
+    }
+
     @Test
     public void getAlertsByIdTest1()
     {

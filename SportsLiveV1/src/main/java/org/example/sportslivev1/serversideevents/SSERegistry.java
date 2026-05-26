@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.example.sportslivev1.dto.AlertMapper;
 import org.example.sportslivev1.entity.Alerts;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -25,7 +26,7 @@ public class SSERegistry {
     public void broadcast(Alerts alert) {
         for (SseEmitter e : emitters) {
             try {
-                e.send(SseEmitter.event().name("ALERT").data(alert));
+                e.send(SseEmitter.event().name("ALERT").data(AlertMapper.toResponse(alert)));
             } catch (IOException ex) {
                 emitters.remove(e);
             }

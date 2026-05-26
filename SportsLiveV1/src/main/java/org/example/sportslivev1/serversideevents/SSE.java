@@ -2,6 +2,7 @@ package org.example.sportslivev1.serversideevents;
 
 import java.io.IOException;
 
+import org.example.sportslivev1.dto.AlertMapper;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.service.AlertsServiceImp;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class SSE {
         
         for (Alerts a : pending) {
             try {
-                emitter.send(SseEmitter.event().name("ALERT").data(a));
+                emitter.send(SseEmitter.event().name("ALERT").data(AlertMapper.toResponse(a)));
             } catch (IOException e) {
                 
                 break;
