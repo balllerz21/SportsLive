@@ -1,22 +1,17 @@
 package org.example.sportslivev1.controller;
 
-import org.example.sportslivev1.repository.AlertsRepo;
 import org.example.sportslivev1.service.AlertsServiceImp;
 import org.example.sportslivev1.service.GamesServiceImp;
 import org.example.sportslivev1.service.UsersServiceImpl;
-import org.example.sportslivev1.specifications.AlertsSpecifications;
 import org.example.sportslivev1.dto.AlertMapper;
 import org.example.sportslivev1.dto.AlertResponse;
 import org.example.sportslivev1.dto.AlertsRequest;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.example.sportslivev1.entity.Alerts.AlertType;
-import org.example.sportslivev1.entity.Games;
+import org.example.sportslivev1.entity.Users;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,11 +23,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
+import java.security.Principal;
 import java.util.List;
-
-import javax.swing.text.html.parser.Entity;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,11 +42,16 @@ public class AlertsController {
     UsersServiceImpl service3;
     
     @PostMapping("/add")
-    public ResponseEntity<AlertResponse> add(@RequestBody AlertsRequest alert) {
+    public ResponseEntity<AlertResponse> add(@RequestBody AlertsRequest alert, Principal principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+
         try{
+            Users user = service3.getUserByUserName(principal.getName());
             Alerts a = service.createAlert(
                 service2.getGameById(alert.getGameId()),
-                service3.getUserById(alert.getUserId()),
+                user,
                 alert.getTeamName(),
                 alert.getAlertType(),
                 alert.getTargetVal()
@@ -64,7 +61,7 @@ public class AlertsController {
         }
         catch (Exception e)
         {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "Game ID not found");
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
         }
     }
     

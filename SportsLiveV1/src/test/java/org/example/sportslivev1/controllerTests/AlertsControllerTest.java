@@ -34,6 +34,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -69,7 +70,6 @@ public class AlertsControllerTest {
         void addAlertTest() throws Exception {
                 AlertsRequest req = new AlertsRequest();
                 req.setGameId(902L);
-                req.setUserId(1L);
                 req.setTeamName("Charlotte Hornets");
                 req.setAlertType(Alerts.AlertType.SCORE_OVER);
                 req.setTargetVal(126);
@@ -91,7 +91,7 @@ public class AlertsControllerTest {
                 savedAlert.setUser(user);
 
                 when(gamesService.getGameById(902L)).thenReturn(game);
-                when(usersService.getUserById(1L)).thenReturn(user);
+                when(usersService.getUserByUserName("testuser")).thenReturn(user);
                 when(alertsService.createAlert(
                         same(game),
                         same(user),
@@ -101,11 +101,13 @@ public class AlertsControllerTest {
                 )).thenReturn(savedAlert);
 
                 mockMvc.perform(post("/alerts/add")
+                        .principal(new UsernamePasswordAuthenticationToken("testuser", null))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                         .andExpect(status().isCreated());
 
                 verify(gamesService).getGameById(902L);
+                verify(usersService).getUserByUserName("testuser");
                 verify(alertsService).createAlert(
                         same(game),
                         same(user),

@@ -7,15 +7,16 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.cors.CorsUtils;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
 import org.example.sportslivev1.service.UserDetailsServiceImpl;
+import org.example.sportslivev1.utils.JwtUtilities;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.example.sportslivev1.auth.*;
 
@@ -24,15 +25,10 @@ import org.example.sportslivev1.auth.*;
 public class WebSecurity {
     @Autowired
     UserDetailsServiceImpl userDetailsService;
-
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
-
-    @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
-    }
-
+    @Autowired
+    private JwtUtilities jwtUtilities;
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -49,14 +45,18 @@ public class WebSecurity {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
+                .cors(withDefaults())
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/users/login", "/users/signup").permitAll()
                         .anyRequest().authenticated()
                 );
                 http.authenticationProvider(authenticationProvider());
-                http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+                http.addFilterBefore(new AuthTokenFilter(jwtUtilities, userDetailsService), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
     @Bean

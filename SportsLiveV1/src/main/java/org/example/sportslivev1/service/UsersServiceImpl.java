@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.example.sportslivev1.entity.Users;
+import org.example.sportslivev1.entity.Users.UserRole;
 import org.example.sportslivev1.repository.UsersRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,7 +21,7 @@ public class UsersServiceImpl implements UsersService {
     private BCryptPasswordEncoder passwordEncoder;
     @Override
     public Users createUser(String userName, String passwordHash, Users.UserRole role) {
-        Users user = new Users(userName, passwordEncoder.encode(passwordHash), role);
+        Users user = new Users(userName, passwordEncoder.encode(passwordHash), UserRole.USER);
         return usersRepository.save(user);
     }
 

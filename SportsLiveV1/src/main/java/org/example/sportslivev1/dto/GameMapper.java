@@ -19,7 +19,7 @@ public class GameMapper {
         dto.setAwayScore(game.getAwayScore());
         dto.setSchedTime(game.getSchedTime());
         dto.setUpdatedTime(game.getUpdatedTime());
-        dto.setStatus(game.getStatus().name());
+        dto.setStatus(game.getStatus() == null ? null : game.getStatus().name());
 
         return dto;
     }
@@ -34,7 +34,7 @@ public class GameMapper {
         dto.setAwayScore(game.getAwayScore());
         dto.setSchedTime(game.getSchedTime());
         dto.setUpdatedTime(game.getUpdatedTime());
-        dto.setStatus(game.getStatus().name());
+        dto.setStatus(game.getStatus() == null ? null : game.getStatus().name());
 
         if (game.getAlerts() == null) {
             dto.setAlerts(Collections.emptyList());

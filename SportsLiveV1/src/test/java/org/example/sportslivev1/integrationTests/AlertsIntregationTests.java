@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockServletContext;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
@@ -29,6 +30,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.security.cert.PKIXRevocationChecker.Option;
+import java.util.Optional;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.hamcrest.Matchers.everyItem;
 
@@ -39,13 +44,12 @@ import tools.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc(addFilters = false)
 @ContextConfiguration(classes = { DemoApplication.class })
 @WebAppConfiguration
+// DONE: Fix this layout as users should not be created to check alerts logic.
 
 public class AlertsIntregationTests {
     @Autowired
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
-    @Autowired
-    private UsersRepo usersRepository;
     @BeforeEach
     public void setup() throws Exception {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.webApplicationContext).build();
@@ -115,10 +119,10 @@ public class AlertsIntregationTests {
     @Test
     public void getAlertByIdExists() throws Exception
     {
-        this.mockMvc.perform(get("/alerts/{id}", "204")
+        this.mockMvc.perform(get("/alerts/{id}", "303")
         .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value("204"))
-        .andExpect(jsonPath("$.teamName").value("Phoenix Suns"))
+        .andExpect(jsonPath("$.id").value("303"))
+        .andExpect(jsonPath("$.teamName").value("Charlotte Hornets"))
         .andExpect(jsonPath("$.alertType").value("SCORE_OVER"))
         .andExpect(jsonPath("$.status").value("FINISHED"));
     }
@@ -131,12 +135,9 @@ public class AlertsIntregationTests {
     @Test 
     public void createAlertTest() throws Exception
     {
-        Users user = new Users("testuser", "password", Users.UserRole.USER);
-        user = usersRepository.save(user);
         // making the request body
         AlertsRequest res = new AlertsRequest();
         res.setGameId(1555l);
-        res.setUserId(user.getId());
         res.setTeamName("San Antonio Spurs");
         res.setAlertType(Alerts.AlertType.SCORE_OVER);
         res.setTargetVal(100);
@@ -145,6 +146,8 @@ public class AlertsIntregationTests {
         String json  = new ObjectMapper().writeValueAsString(res);
     
         this.mockMvc.perform(post("/alerts/add")
+        // using admin user here
+        .principal(new UsernamePasswordAuthenticationToken("balllerz21", null))
         .contentType(MediaType.APPLICATION_JSON)
         .content(json)
         .accept(MediaType.APPLICATION_JSON))
@@ -165,6 +168,7 @@ public class AlertsIntregationTests {
         // turning it into json
         String json  = new ObjectMapper().writeValueAsString(res);
         this.mockMvc.perform(post("/alerts/add")
+        .principal(new UsernamePasswordAuthenticationToken("testuser", null))
         .contentType(MediaType.APPLICATION_JSON)
         .content(json)
         .accept(MediaType.APPLICATION_JSON))
