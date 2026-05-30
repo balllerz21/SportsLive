@@ -1,9 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { apiFetch } from "../../../api/utils";
 
-// ============================================================
-// TYPES — same shape as your backend
-// ============================================================
 type Alert = {
   id: number;
   teamName: string;
@@ -23,8 +21,6 @@ type Game = {
   alerts: Alert[];
 };
 
-// What we SEND when creating a new alert.
-// No id (backend generates), no status (backend sets default), adds gameId.
 type CreateAlertRequest = {
   teamName: string;
   alertType: string;
@@ -32,19 +28,16 @@ type CreateAlertRequest = {
   gameId: number;
 };
 
-// ============================================================
-// API FUNCTIONS — talk to the backend
-// ============================================================
 
 async function getGameById(id: number): Promise<Game> {
-  const res = await fetch(`http://localhost:8080/games/${id}`);
+  const res = await apiFetch(`/games/${id}`);
   if (!res.ok) throw new Error("Failed to fetch game");
   return res.json();
 }
 
 // NEW: creates an alert. Returns the created alert (backend sends it back with id + status).
 async function createAlert(request: CreateAlertRequest): Promise<Alert> {
-  const res = await fetch(`http://localhost:8080/alerts/add`, {
+  const res = await apiFetch(`/alerts/add`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
@@ -54,9 +47,6 @@ async function createAlert(request: CreateAlertRequest): Promise<Alert> {
   return res.json();
 }
 
-// ============================================================
-// COMPONENT
-// ============================================================
 
 function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -209,7 +199,7 @@ function GamePage() {
                 onChange={e => setFormAlertType(e.target.value)}
               >
                 <option value="SCORE_OVER">Score over</option>
-                <option value="SCORE_BELOW">Score below</option>
+                <option value="SCORE_UNDER">Score under</option>
               </select>
             </div>
 
@@ -222,7 +212,7 @@ function GamePage() {
               />
             </div>
 
-            {/* {formError && <p style={{ color: "red" }}>{formError}</p>} */}
+            {formError && <p style={{ color: "red" }}>{formError}</p>}
 
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button onClick={closeModal} disabled={isSubmitting}>Cancel</button>

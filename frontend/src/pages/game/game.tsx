@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { apiFetch, getResponseErrorMessage } from "../../api/utils";
 type GameStatus = 'SCHEDULED' | 'LIVE' | 'FINAL';
 type Game = {
     id: number;
@@ -13,10 +14,10 @@ type Game = {
 
 async function getAllgames() : Promise<Game[]>
 {
-  const res = await fetch("http://localhost:8080/games");
+  const res = await apiFetch("/games");
 
   if (!res.ok) {
-    throw new Error("Failed to fetch games");
+    throw new Error(await getResponseErrorMessage(res));
   }
 
   const games: Game[] = await res.json();
@@ -37,7 +38,8 @@ function GamesPage() {
       }
       catch (err)
       {
-        setError("Could not load games");
+        const message = err instanceof Error ? err.message : "Could not load games";
+        setError(message);
       }
       finally {
         setLoading(false);
