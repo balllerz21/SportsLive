@@ -1,4 +1,5 @@
 import { useState, useEffect} from 'react';
+import { apiFetch } from '../../api/utils';
 type AlertType = 'SCORE_ABOVE' | 'SCORE_BELOW';
 type AlertStatus = 'CREATED' | 'TRIGGERED' | "FINISHED";
 type GameStatus = 'SCHEDULED' | 'LIVE' | 'FINAL';
@@ -22,7 +23,7 @@ export interface AlertDto {
 type FilterStatus = AlertStatus | 'ALL';
 async function getAlerts() : Promise<AlertDto[]>
 {
-    const res = await fetch("http://localhost:8080/alerts");
+    const res = await apiFetch("/alerts");
     if (!res.ok) {
         throw new Error("Failed to fetch alerts");
     }
