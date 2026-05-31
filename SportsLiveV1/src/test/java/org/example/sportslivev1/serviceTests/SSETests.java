@@ -9,7 +9,8 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Games;
@@ -42,29 +43,30 @@ public class SSETests {
 
     @Test
     public void subscribe_returnsNonNullEmitter() {
-        assertThat(registry.subscribe()).isNotNull();
+        assertThat(registry.subscribe(1L)).isNotNull();
     }
 
     @Test
-    public void subscribe_addsEmitterToInternalList() {
-        registry.subscribe();
-        registry.subscribe();
+    public void subscribe_addsEmitterToInternalMapByClientId() {
+        registry.subscribe(1L);
+        registry.subscribe(2L);
         
-        List<SseEmitter> emitters = 
-            (List<SseEmitter>) ReflectionTestUtils.getField(registry, "emitters");
+        Map<Long, SseEmitter> emitters = 
+            (Map<Long, SseEmitter>) ReflectionTestUtils.getField(registry, "emitters");
         assertThat(emitters).hasSize(2);
+        assertThat(emitters).containsKeys(1L, 2L);
     }
 
     @Test
-    public void broadcast_sendsToAllSubscribers() throws IOException {
-        SseEmitter e1 = mock(SseEmitter.class);
-        SseEmitter e2 = mock(SseEmitter.class);
-        injectEmitters(e1, e2);
+    public void broadcast_sendsOnlyToMatchingSubscriber() throws IOException {
+        SseEmitter matching = mock(SseEmitter.class);
+        SseEmitter other = mock(SseEmitter.class);
+        injectEmitters(Map.of(1L, matching, 2L, other));
 
-        registry.broadcast(sampleAlert);
+        registry.broadcast(1L, sampleAlert);
 
-        verify(e1).send(any(SseEmitter.SseEventBuilder.class));
-        verify(e2).send(any(SseEmitter.SseEventBuilder.class));
+        verify(matching).send(any(SseEmitter.SseEventBuilder.class));
+        verify(other, never()).send(any(SseEmitter.SseEventBuilder.class));
     }
 
     @Test
@@ -73,16 +75,27 @@ public class SSETests {
         SseEmitter dead = mock(SseEmitter.class);
         doThrow(new IOException("client gone"))
             .when(dead).send(any(SseEmitter.SseEventBuilder.class));
-        injectEmitters(alive, dead);
+        injectEmitters(Map.of(1L, alive, 2L, dead));
 
-        registry.broadcast(sampleAlert);
+        registry.broadcast(2L, sampleAlert);
 
-        List<SseEmitter> remaining = 
-            (List<SseEmitter>) ReflectionTestUtils.getField(registry, "emitters");
-        assertThat(remaining).containsExactly(alive).doesNotContain(dead);
+        Map<Long, SseEmitter> remaining = 
+            (Map<Long, SseEmitter>) ReflectionTestUtils.getField(registry, "emitters");
+        assertThat(remaining).containsEntry(1L, alive);
+        assertThat(remaining).doesNotContainKey(2L);
     }
 
-    private void injectEmitters(SseEmitter... emitters) {
-        ReflectionTestUtils.setField(registry, "emitters", new CopyOnWriteArrayList<>(List.of(emitters)));
+    @Test
+    public void broadcast_doesNothingWhenSubscriberMissing() throws IOException {
+        SseEmitter other = mock(SseEmitter.class);
+        injectEmitters(Map.of(2L, other));
+
+        registry.broadcast(1L, sampleAlert);
+
+        verify(other, never()).send(any(SseEmitter.SseEventBuilder.class));
+    }
+
+    private void injectEmitters(Map<Long, SseEmitter> emitters) {
+        ReflectionTestUtils.setField(registry, "emitters", new ConcurrentHashMap<>(emitters));
     }
 }

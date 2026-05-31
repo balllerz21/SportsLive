@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import org.example.sportslivev1.auth.JwtResponse;
 import org.example.sportslivev1.dto.UserRequest;
 import org.example.sportslivev1.dto.UsersMapper;
+import org.example.sportslivev1.entity.SecureUsers;
 import org.example.sportslivev1.entity.Users;
 import org.example.sportslivev1.service.UsersServiceImpl;
 import org.example.sportslivev1.utils.JwtUtilities;
@@ -46,11 +47,11 @@ public class UsersController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         // get user details and roles to return to the user along with the token.
         String jwt = jwtUtils.generateJwtToken(authentication); 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        List<String> roles = userDetails.getAuthorities().stream().map(item -> item.getAuthority())
+        SecureUsers principal = (SecureUsers) authentication.getPrincipal();
+        List<String> roles = principal.getAuthorities().stream().map(item -> item.getAuthority())
         .collect(Collectors.toList());
         // return the token and user details to the user.
-        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getUsername(), roles));
+        return ResponseEntity.ok(new JwtResponse(principal.getId(), jwt, principal.getUsername(), roles));
         } catch (AuthenticationException ex) {
             return ResponseEntity.status(401).body("Error: Invalid username or password");
         }

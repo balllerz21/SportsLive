@@ -53,6 +53,7 @@ public class WebSecurity {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/users/login", "/users/signup").permitAll()
+                        .requestMatchers("/sse").permitAll() 
                         .anyRequest().authenticated()
                 );
                 http.authenticationProvider(authenticationProvider());
