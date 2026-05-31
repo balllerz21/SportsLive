@@ -1,5 +1,5 @@
 import { useState, useEffect} from 'react';
-import { apiFetch } from '../../api/utils';
+import { apiFetch, BASE_URL, getUserId } from '../../api/utils';
 type AlertType = 'SCORE_ABOVE' | 'SCORE_BELOW';
 type AlertStatus = 'CREATED' | 'TRIGGERED' | "FINISHED";
 type GameStatus = 'SCHEDULED' | 'LIVE' | 'FINAL';
@@ -52,6 +52,26 @@ function AlertsList() {
       } 
     }
     loadAlerts();
+    }, []);
+    useEffect(() => {
+      const userId = getUserId();
+      if (!userId) return;                 
+
+      const es = new EventSource(`${BASE_URL}/sse?clientId=${userId}`);
+      es.addEventListener("ALERT", (e) => {
+        const incoming: AlertDto = JSON.parse((e as MessageEvent).data);
+
+        setAlerts(prev => {
+          const exists = prev.some(a => a.id === incoming.id);
+          return exists
+            ? prev.map(a => (a.id === incoming.id ? incoming : a))
+            : [incoming, ...prev];
+        });
+      });
+
+      es.onerror = () => console.warn("SSE error — browser will retry");
+
+      return () => es.close();                 
     }, []);
 
   const visibleAlerts = statusFilter === 'ALL' ? alerts : alerts.filter(a => a.status === statusFilter);

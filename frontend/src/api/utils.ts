@@ -1,5 +1,6 @@
-const BASE_URL = "http://localhost:8080";
+export const BASE_URL = "http://localhost:8080";
 const TOKEN_KEY = "jwtToken";
+const USER_ID_KEY = "userId";
 
 function decodeJwtPayload(token: string): { exp?: number } {
   const payload = token.split(".")[1];
@@ -63,8 +64,22 @@ export async function loginUser(username: string, password: string) {
   }
 
   saveJwtToken(token);
+  if (data.userId != null) {
+    saveUserId(data.userId);
+  }
   return data;
 }
+
+export function saveUserId(userId: number | string) {
+  localStorage.setItem(USER_ID_KEY, String(userId));
+}
+export function getUserId(): string | null {
+  return localStorage.getItem(USER_ID_KEY);
+}
+export function clearUserId() {
+  localStorage.removeItem(USER_ID_KEY);
+}
+
 
 export async function getResponseErrorMessage(res: Response) {
   const text = await res.text();
