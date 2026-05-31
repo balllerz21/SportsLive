@@ -19,6 +19,7 @@ import org.example.sportslivev1.auth.AuthEntryPointJwt;
 import org.example.sportslivev1.auth.AuthTokenFilter;
 import org.example.sportslivev1.controller.UsersController;
 import org.example.sportslivev1.dto.UserRequest;
+import org.example.sportslivev1.entity.SecureUsers;
 import org.example.sportslivev1.entity.Users;
 import org.example.sportslivev1.entity.Users.UserRole;
 import org.example.sportslivev1.service.UsersServiceImpl;
@@ -33,7 +34,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -119,7 +119,9 @@ public class UsersControllerTest {
     @Test
     public void logInTest() throws Exception {
         UserRequest request = buildRequest("testuser", "plain-password", UserRole.USER);
-        User principal = new User("testuser", "encoded-password", List.of(() -> "ROLE_USER"));
+        Users user = new Users("testuser", "encoded-password", UserRole.USER);
+        user.setId(22L);
+        SecureUsers principal = new SecureUsers(user);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
             principal,
             null,
@@ -136,6 +138,7 @@ public class UsersControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("jwt-token"))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.id").value(22L))
                 .andExpect(jsonPath("$.username").value("testuser"))
                 .andExpect(jsonPath("$.roles[0]").value("ROLE_USER"));
 

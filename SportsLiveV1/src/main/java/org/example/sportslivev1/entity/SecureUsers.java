@@ -22,6 +22,9 @@ public class SecureUsers implements UserDetails{
     public String getPassword() {
         return user.getPasswordHash();
     }
+    public Long getId() {
+        return user.getId();
+    }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Users.UserRole temp = user.getRole() == null ? Users.UserRole.USER : user.getRole();
