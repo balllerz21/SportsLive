@@ -26,7 +26,7 @@ const LoginPage: React.FC = () => {
         }
         try {
             await loginUser(username, password);
-            navigate("/games");
+            navigate("/dashboard");
         } catch (error) {
             console.error('Error occurred while logging in:', error);
             alert(error instanceof Error ? error.message : "Login failed");
@@ -58,12 +58,6 @@ const LoginPage: React.FC = () => {
                 </div>
 
                 <div className="login-center-options">
-                    <div className="remember-div">
-                    <input type="checkbox" id="remember-checkbox" />
-                    <label htmlFor="remember-checkbox">
-                        Remember for 30 days
-                    </label>
-                    </div>
                     <a href="#" className="forgot-pass-link">
                     Forgot password?
                     </a>

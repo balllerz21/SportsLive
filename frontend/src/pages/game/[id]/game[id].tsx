@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { apiFetch } from "../../../api/utils";
+import { apiFetch, formatUserDateTime } from "../../../api/utils";
 
 type Alert = {
   id: number;
@@ -35,7 +35,6 @@ async function getGameById(id: number): Promise<Game> {
   return res.json();
 }
 
-// NEW: creates an alert. Returns the created alert (backend sends it back with id + status).
 async function createAlert(request: CreateAlertRequest): Promise<Alert> {
   const res = await apiFetch(`/alerts/add`, {
     method: "POST",
@@ -51,26 +50,23 @@ async function createAlert(request: CreateAlertRequest): Promise<Alert> {
 function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
 
-  // ---- Game state ----
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ---- Modal / form state ----
-  // Controls whether the modal is open or closed.
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Each form field has its own state. These are "controlled inputs":
-  // the input's value comes FROM state, and typing UPDATES state.
+
   const [formTeamName, setFormTeamName] = useState("");
   const [formAlertType, setFormAlertType] = useState("SCORE_OVER");
   const [formTargetVal, setFormTargetVal] = useState<number>(0);
 
-  // Submitting / error state for the form itself (separate from the page error).
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // ---- Fetch the game on mount ----
+
   useEffect(() => {
     async function loadGame() {
       try {
@@ -87,10 +83,8 @@ function GamePage() {
     loadGame();
   }, [gameId]);
 
-  // ---- Handlers ----
 
   function openModal() {
-    // Reset the form every time we open it, so stale values don't linger.
     setFormTeamName("");
     setFormAlertType("SCORE_OVER");
     setFormTargetVal(0);
@@ -103,7 +97,7 @@ function GamePage() {
   }
 
   async function handleSubmit() {
-    if (!game) return; // safety: shouldn't happen, but TypeScript needs the check
+    if (!game) return; 
 
     setIsSubmitting(true);
     setFormError(null);
@@ -116,8 +110,6 @@ function GamePage() {
         gameId: Number(gameId),
       });
 
-      // Optimistically add the new alert to the page without re-fetching the whole game.
-      // This uses the "functional" setState form because we're deriving new state from old state.
       setGame(prev => prev ? { ...prev, alerts: [...prev.alerts, newAlert] } : prev);
 
       closeModal();
@@ -129,31 +121,38 @@ function GamePage() {
     }
   }
 
-  // ---- Render ----
 
   if (loading) return <div>Loading game...</div>;
   if (error || !game) return <div>{error || "Game not found"}</div>;
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <main className="game-detail-page">
+      <div className="game-detail-header">
         <h1>Game Details</h1>
-        <button onClick={openModal}>+ Create Alert</button>
+        <button className="primary-action" onClick={openModal}>+ Create Alert</button>
       </div>
 
-      <div>
-        <p>
-          {game.awayTeam} {game.awayScore} - {game.homeTeam} {game.homeScore}
-        </p>
-        <p>Status: {game.status}</p>
-        <p>Time: {game.schedTime}</p>
+      <div className="game-score-panel">
+        <div className="team-side">
+          <span className="team-name">{game.awayTeam}</span>
+          <span className="team-score">{game.awayScore}</span>
+        </div>
+        <div className="match-center">
+          <span className={`status-pill status-${game.status.toLowerCase()}`}>{game.status}</span>
+          <span className="versus">vs</span>
+          <span className="game-time">{formatUserDateTime(game.schedTime)}</span>
+        </div>
+        <div className="team-side">
+          <span className="team-name">{game.homeTeam}</span>
+          <span className="team-score">{game.homeScore}</span>
+        </div>
       </div>
 
-      <div>
+      <section className="game-alerts-section">
         <h2>Alerts</h2>
         {game.alerts.length === 0 && <p>No alerts yet.</p>}
         {game.alerts.map(a => (
-          <div key={a.id} style={{ border: "1px solid #ccc", padding: 8, margin: "8px 0" }}>
+          <div className="game-alert-card" key={a.id}>
             <h3>Alert {a.id}</h3>
             <p>Team: {a.teamName}</p>
             <p>Type: {a.alertType}</p>
@@ -161,26 +160,20 @@ function GamePage() {
             <p>Status: {a.status}</p>
           </div>
         ))}
-      </div>
+      </section>
 
-      {/* ====== MODAL ====== */}
       {isModalOpen && (
         <div
-          style={{
-            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 100,
-          }}
+          className="modal-backdrop"
           onClick={closeModal}
         >
           <div
-            style={{ background: "white", padding: 24, borderRadius: 8, minWidth: 320 }}
+            className="modal-panel"
             onClick={e => e.stopPropagation()}
           >
             <h2>Create Alert</h2>
 
-            <div style={{ marginBottom: 12 }}>
+            <div className="form-row">
               <label>Team:</label>
               <select
                 value={formTeamName}
@@ -192,7 +185,7 @@ function GamePage() {
               </select>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
+            <div className="form-row">
               <label>Alert type:</label>
               <select
                 value={formAlertType}
@@ -203,7 +196,7 @@ function GamePage() {
               </select>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
+            <div className="form-row">
               <label>Target value:</label>
               <input
                 type="number"
@@ -212,18 +205,18 @@ function GamePage() {
               />
             </div>
 
-            {formError && <p style={{ color: "red" }}>{formError}</p>}
+            {formError && <p className="form-error">{formError}</p>}
 
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div className="modal-actions">
               <button onClick={closeModal} disabled={isSubmitting}>Cancel</button>
-              <button onClick={handleSubmit} disabled={isSubmitting || !formTeamName}>
+              <button className="primary-action" onClick={handleSubmit} disabled={isSubmitting || !formTeamName}>
                 {isSubmitting ? "Creating..." : "Create"}
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }
 
