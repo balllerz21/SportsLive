@@ -1,5 +1,6 @@
-const BASE_URL = "http://localhost:8080";
+export const BASE_URL = "http://localhost:8080";
 const TOKEN_KEY = "jwtToken";
+const USER_ID_KEY = "id";
 
 function decodeJwtPayload(token: string): { exp?: number } {
   const payload = token.split(".")[1];
@@ -14,6 +15,7 @@ function decodeJwtPayload(token: string): { exp?: number } {
 
 export function clearJwtToken() {
   localStorage.removeItem(TOKEN_KEY);
+  clearUserId();
 }
 
 export function isJwtExpired(token: string) {
@@ -63,7 +65,40 @@ export async function loginUser(username: string, password: string) {
   }
 
   saveJwtToken(token);
+  if (data.id != null) {
+    saveUserId(data.id);
+  }
   return data;
+}
+
+export function saveUserId(userId: number | string) {
+  localStorage.setItem(USER_ID_KEY, String(userId));
+}
+export function getUserId(): string | null {
+  return localStorage.getItem(USER_ID_KEY);
+}
+export function clearUserId() {
+  localStorage.removeItem(USER_ID_KEY);
+}
+
+export function formatUserDateTime(value: string | number | Date | null | undefined) {
+  if (!value) {
+    return "TBD";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "TBD";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
 }
 
 export async function getResponseErrorMessage(res: Response) {
