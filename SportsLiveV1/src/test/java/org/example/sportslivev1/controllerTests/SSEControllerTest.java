@@ -15,6 +15,7 @@ import org.example.sportslivev1.entity.Users;
 import org.example.sportslivev1.serversideevents.SSE;
 import org.example.sportslivev1.serversideevents.SSERegistry;
 import org.example.sportslivev1.service.AlertsServiceImp;
+import org.example.sportslivev1.service.UsersServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,6 +35,7 @@ public class SSEControllerTest {
     @Mock AlertsServiceImp service;
     @Mock SSERegistry registry;
     @Mock SseEmitter emitter;
+    @Mock UsersServiceImpl usersService;
     
     @InjectMocks SSE controller;
     
@@ -50,12 +53,13 @@ public class SSEControllerTest {
         a1.setIsNotification(true);
         a1.setTriggeredAt(Instant.now());
 
+        when(usersService.getUserByUserName("testuser")).thenReturn(user);
         when(registry.subscribe(clientId)).thenReturn(emitter);
         when(service.getAlertsByStatusAndNotificationReady(
                 Alerts.AlertStatus.TRIGGERED, true, null))
             .thenReturn(List.of(a1));
 
-        SseEmitter result = controller.alertsNotifier(clientId);
+        SseEmitter result = controller.alertsNotifier(clientId, new UsernamePasswordAuthenticationToken("testuser", null));
 
         verify(registry).subscribe(clientId);
         verify(emitter).send(any(SseEmitter.SseEventBuilder.class));
@@ -81,12 +85,13 @@ public class SSEControllerTest {
         otherAlert.setId(2L);
         otherAlert.setUser(otherUser);
 
+        when(usersService.getUserByUserName("testuser")).thenReturn(matchingUser);
         when(registry.subscribe(clientId)).thenReturn(emitter);
         when(service.getAlertsByStatusAndNotificationReady(
                 Alerts.AlertStatus.TRIGGERED, true, null))
             .thenReturn(List.of(matchingAlert, otherAlert));
 
-        SseEmitter result = controller.alertsNotifier(clientId);
+        SseEmitter result = controller.alertsNotifier(clientId, new UsernamePasswordAuthenticationToken("testuser", null));
 
         verify(registry).subscribe(clientId);
         verify(emitter, times(1)).send(any(SseEmitter.SseEventBuilder.class));

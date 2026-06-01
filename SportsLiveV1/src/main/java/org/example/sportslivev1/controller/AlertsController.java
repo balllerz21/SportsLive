@@ -66,10 +66,18 @@ public class AlertsController {
     }
     
     @GetMapping
-    public ResponseEntity<List<AlertResponse>> getAllAlerts(@RequestParam(required = false) String teamName, @RequestParam(required = false) AlertType alertType, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) String period) {
+    public ResponseEntity<List<AlertResponse>> getAllAlerts(@RequestParam(required = false) String teamName, @RequestParam(required = false) AlertType alertType, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) String period, Principal principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+
         try {
             List<Alerts> alerts;
             alerts = service.getAllAlerts(status, alertType, teamName, period);
+            alerts = alerts.stream()
+                .filter(alert -> alert.getUser() != null)
+                .filter(alert -> principal.getName().equals(alert.getUser().getUserName()))
+                .toList();
             return ResponseEntity.ok(alerts.stream().map(AlertMapper::toResponse).toList());
         }
         catch (Exception e)
@@ -79,9 +87,16 @@ public class AlertsController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AlertResponse> alertById(@PathVariable Long id) {
+    public ResponseEntity<AlertResponse> alertById(@PathVariable Long id, Principal principal) {
         try {
-            return ResponseEntity.ok(AlertMapper.toResponse(service.getAlertById(id)));
+            Alerts alert = service.getAlertById(id);
+            if (principal == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+            }
+            if (alert.getUser() == null || !principal.getName().equals(alert.getUser().getUserName())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot access this alert");
+            }
+            return ResponseEntity.ok(AlertMapper.toResponse(alert));
         }
         catch (EntityNotFoundException e)
         {
@@ -92,7 +107,14 @@ public class AlertsController {
 
     }
     @DeleteMapping("/delete")
-    public void delete(@RequestParam Long id){
+    public void delete(@RequestParam Long id, Principal principal){
+        Alerts alert = service.getAlertById(id);
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        if (alert.getUser() == null || !principal.getName().equals(alert.getUser().getUserName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot access this alert");
+        }
         service.deleteAlert(id);
     }
     
