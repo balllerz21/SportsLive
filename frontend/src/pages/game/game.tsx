@@ -9,7 +9,8 @@ type Game = {
     awayTeam : string;
     awayScore : number;
     schedTime : any;
-    status : GameStatus
+    status : GameStatus;
+    updatedTime: any;
   }
 
 async function getAllgames() : Promise<Game[]>
@@ -60,7 +61,8 @@ function GamesPage() {
               ...oldGame, 
               homeScore: updated.homeScore, 
               awayScore: updated.awayScore,
-              status: updated.status 
+              status: updated.status, 
+              updatedTime: updated.updatedTime
             } : oldGame;
           })
         );
@@ -111,7 +113,7 @@ function GamesPage() {
             </div>
             <div className="game-list-meta">
               <span className={`status-pill status-${game.status.toLowerCase()}`}>{game.status}</span>
-              <span>{formatUserDateTime(game.schedTime)}</span>
+              <span>{game.status == 'SCHEDULED' ? formatUserDateTime(game.schedTime) : formatUserDateTime(game.updatedTime)}</span>
             </div>
             <Link className="game-card-action" to={`/games/${game.id}`}>
               View Game
