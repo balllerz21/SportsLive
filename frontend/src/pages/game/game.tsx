@@ -55,7 +55,6 @@ function GamesPage() {
       try {
         const freshData = await getAllgames(statusFilter === "ALL" ? undefined : statusFilter);
         
-<<<<<<< Updated upstream
         setGames(prevGames => 
           prevGames.map(oldGame => {
             const updated = freshData.find(g => g.id === oldGame.id);
@@ -68,9 +67,7 @@ function GamesPage() {
             } : oldGame;
           })
         );
-=======
         setGames(freshData);
->>>>>>> Stashed changes
       } catch (err) {
         console.error("Polling failed", err);
       }
