@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FaEye } from "react-icons/fa6";
 import { FaEyeSlash } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
-import { getResponseErrorMessage, loginUser } from "../../api/utils";
+import { apiFetch, getResponseErrorMessage, loginUser } from "../../api/utils";
 
 const SignUpPage: React.FC = () => {
     const [username, setUsername] = useState('');
@@ -26,7 +26,7 @@ const SignUpPage: React.FC = () => {
             return;
         }
         try {
-            const res = await fetch("users/signup", {
+            const res = await apiFetch("/users/signup", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
