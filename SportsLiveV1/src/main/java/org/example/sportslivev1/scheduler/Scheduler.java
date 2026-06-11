@@ -22,8 +22,9 @@ public class Scheduler {
 
     @Scheduled(fixedRate = 60000)
     public void scheduleLive() {
-        pollingService.createOrUpdateGame("nba");
-        pollingService.createOrUpdateGame("wnba");
+        pollingService.createOrUpdateGame("basketball", "nba");
+        pollingService.createOrUpdateGame("basketball", "wnba");
+        pollingService.createOrUpdateGame("soccer", "fifa.world");
         List<Alerts> newlyTriggered = alertsService.updateAlertsStatus(AlertStatus.CREATED);
         alertsService.updateAlertsStatus(AlertStatus.TRIGGERED); 
         newlyTriggered.forEach(a -> {

@@ -95,9 +95,9 @@ public class PollingService {
         return games;
     }
 
-    public void createOrUpdateGame(String site) {
+    public void createOrUpdateGame(String sport, String site) {
         List<Games> games = new ArrayList<>();
-        String rawJson = espnApiClient.getScoreBoard(site);
+        String rawJson = espnApiClient.getScoreBoard(sport, site);
         ObjectMapper objectMapper = new ObjectMapper();
 
         try {
