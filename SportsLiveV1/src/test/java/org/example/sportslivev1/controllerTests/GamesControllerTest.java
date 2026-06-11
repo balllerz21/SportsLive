@@ -56,7 +56,7 @@ public class GamesControllerTest {
         g1.setId(id);
         Games g2 = new Games("401869188", "Denver Nuggets", "Minnesota Timberwolves", 116, 105, Games.Status.FINAL, Instant.parse("2026-04-18T02:00:00Z"));
         g2.setId(id2);
-        when(gamesService.getAllGames()).thenReturn(List.of(g1, g2));
+        when(gamesService.getAllGames(null)).thenReturn(List.of(g1, g2));
         // for testing purposes
         Instant test = Instant.parse("2026-04-18T02:00:00Z");
         mockMvc.perform(get("/games")
@@ -78,7 +78,7 @@ public class GamesControllerTest {
                 .andExpect(jsonPath("$[1].awayScore").value(105))
                 .andExpect(jsonPath("$[1].status").value("FINAL"))
                 .andExpect(jsonPath("$[1].schedTime").value(test.toString()));
-        verify(gamesService).getAllGames();
+        verify(gamesService).getAllGames(null);
 
     }
     @Test

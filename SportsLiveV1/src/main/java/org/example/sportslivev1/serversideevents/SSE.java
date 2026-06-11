@@ -49,7 +49,10 @@ public class SSE {
                 continue;
             }
             try {
-                emitter.send(SseEmitter.event().name("ALERT").data(AlertMapper.toResponse(a)));
+                emitter.send(SseEmitter.event()
+                    .id(String.valueOf(a.getId()))
+                    .name("ALERT")
+                    .data(AlertMapper.toResponse(a)));
             } catch (IOException e) {
                 
                 break;

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.security.Principal;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.PostMapping;
@@ -116,6 +117,30 @@ public class AlertsController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot access this alert");
         }
         service.deleteAlert(id);
+    }
+
+    @PostMapping("/{id}/ack")
+    public ResponseEntity<Void> acknowledgeAlert(@PathVariable Long id, Principal principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+
+        try {
+            Alerts alert = service.getAlertById(id);
+            if (alert.getUser() == null || !principal.getName().equals(alert.getUser().getUserName())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot access this alert");
+            }
+
+            alert.setNotifiedAt(Instant.now());
+            service.saveAlert(alert);
+            return ResponseEntity.noContent().build();
+        }
+        catch (EntityNotFoundException e)
+        {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "entity not found"
+            );
+        }
     }
     
 

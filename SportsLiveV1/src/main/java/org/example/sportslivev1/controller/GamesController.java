@@ -32,10 +32,7 @@ public class GamesController {
     GamesServiceImp serviceGame;
     @GetMapping
     public List<GameResponse> getAllGames(@RequestParam(required = false) Games.Status status) {
-        List<Games> games = (status != null)
-                ? serviceGame.getGamesByStatus(status)
-                : serviceGame.getAllGames();
-
+        List<Games> games = serviceGame.getAllGames(status);
         return games.stream().map(GameMapper::toResponse).toList();
     }
 

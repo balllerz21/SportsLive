@@ -12,6 +12,8 @@ import org.example.sportslivev1.specifications.AlertsSpecifications;
 import org.example.sportslivev1.utils.Utilities;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import org.springframework.data.jpa.domain.JpaSort;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,12 +45,16 @@ public class AlertsServiceImp implements AlertsService {
     public Alerts createAlert(Games game, Users user,String teamName, Alerts.AlertType alertType, int targetVal) {
         Optional<Games> g1 = gamesRepo.findById(game.getId());
         Optional<Users> u1 = usersRepo.findById(user.getId());
-        if (g1.isPresent() && u1.isPresent())
+        if (g1.isPresent() && u1.isPresent() && g1.get().getStatus() != Games.Status.FINAL)
         {
             Alerts alert = new Alerts(g1.get(), teamName, alertType, targetVal);
             alert.setUser(u1.get());
             alertsRepo.save(alert);
             return alert;
+        }
+        else if (g1.get().getStatus() == Games.Status.FINAL)
+        {
+            throw new IllegalArgumentException("Game is finalized. Cannot add alerts to finalized game");
         }
         else if (g1.isEmpty())
         {
@@ -65,6 +71,13 @@ public class AlertsServiceImp implements AlertsService {
 
     @Override
     public List<Alerts> getAllAlerts(Alerts.AlertStatus status, Alerts.AlertType type, String team, String timeframe) {
+        // adding custom order by 
+        String customOrderSql = "CASE status " +
+                        "  WHEN 'TRIGGERED' THEN 1 " +
+                        "  WHEN 'CREATED' THEN 2 " +
+                        "  WHEN 'FINISHED' THEN 3 " +
+                        "  ELSE 4 END";
+        Sort customSort = JpaSort.unsafe(Sort.Direction.ASC, customOrderSql);
         Specification<Alerts> spec = Specification.unrestricted();
         if (status != null){
             spec = spec.and(AlertsSpecifications.hasStatus(status));
@@ -85,7 +98,7 @@ public class AlertsServiceImp implements AlertsService {
                 throw new IllegalArgumentException("Invalid timeframe format. Use formats like 'daily', 'weekly', 'monthly', or 'yearly'.");
             }
         }
-        return (List<Alerts>) alertsRepo.findAll(spec);
+        return (List<Alerts>) alertsRepo.findAll(spec, customSort);
     }   
     @Override
     public Alerts getAlertById(Long id) {
@@ -136,7 +149,12 @@ public class AlertsServiceImp implements AlertsService {
         return alertsRepo.findByStatusAndIsNotificationAndNotifiedAt(stat, isNotification, notifiedAt);
     }
 
-    // Fix: should check by alert status not by game
+    @Override
+    public Alerts saveAlert(Alerts alert) {
+        return alertsRepo.save(alert);
+    }
+
+    // DONE: should check by alert status not by game
     @Transactional
     public List<Alerts> updateAlertsStatus(Alerts.AlertStatus stat) {
         List<Alerts> alerts = alertsRepo.findByStatus(stat);

@@ -68,10 +68,10 @@ public class PollingServiceTest {
         }
         """;
 
-        when(espnApiClient.getScoreBoard()).thenReturn(rawJson);
+        when(espnApiClient.getScoreBoard("nba")).thenReturn(rawJson);
         ArgumentCaptor<Games> gameCaptor = ArgumentCaptor.forClass(Games.class);
 
-        pollingService.createOrUpdateGame();
+        pollingService.createOrUpdateGame("nba");
 
         verify(gamesService).saveGame(gameCaptor.capture());
 
