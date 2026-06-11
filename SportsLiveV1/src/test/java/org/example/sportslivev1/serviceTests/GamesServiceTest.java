@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Sort;
 
 import org.example.sportslivev1.entity.Games;
 import org.example.sportslivev1.repository.GamesRepo;
@@ -20,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -120,9 +123,9 @@ public class GamesServiceTest {
             Instant.parse("2026-04-17T23:30:00Z")
         );
 
-        when(gamesRepo.findAll()).thenReturn(List.of(game1, game2));
+        when(gamesRepo.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(game1, game2));
 
-        List<Games> result = gamesService.getAllGames();
+        List<Games> result = gamesService.getAllGames(null);
 
         assertEquals(2, result.size());
         assertEquals(game1, result.get(0));

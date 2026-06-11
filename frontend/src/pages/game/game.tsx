@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { apiFetch, formatUserDateTime, getResponseErrorMessage } from "../../api/utils";
 type GameStatus = 'SCHEDULED' | 'LIVE' | 'FINAL';
 type Game = {
     id: number;
@@ -7,16 +8,18 @@ type Game = {
     homeScore : number;
     awayTeam : string;
     awayScore : number;
-    schedTime : any;
-    status : GameStatus
+    schedTime : string;
+    status : GameStatus;
+    updatedTime: string;
   }
 
-async function getAllgames() : Promise<Game[]>
+async function getAllgames(status?: GameStatus) : Promise<Game[]>
 {
-  const res = await fetch("http://localhost:8080/games");
+  const query = status ? `?status=${status}` : "";
+  const res = await apiFetch(`/games${query}`);
 
   if (!res.ok) {
-    throw new Error("Failed to fetch games");
+    throw new Error(await getResponseErrorMessage(res));
   }
 
   const games: Game[] = await res.json();
@@ -31,37 +34,27 @@ function GamesPage() {
   useEffect(() => {
     async function loadGames() {
       try {
-        const data = await getAllgames();
+        const data = await getAllgames(statusFilter === "ALL" ? undefined : statusFilter);
 
         setGames(data);
       }
       catch (err)
       {
-        setError("Could not load games");
+        const message = err instanceof Error ? err.message : "Could not load games";
+        setError(message);
       }
       finally {
         setLoading(false);
       }
     } 
     loadGames();
-  }, []); 
+  }, [statusFilter]); 
 
   useEffect(() => {
     const pollScores = async () => {
       try {
-        const freshData = await getAllgames();
-        
-        setGames(prevGames => 
-          prevGames.map(oldGame => {
-            const updated = freshData.find(g => g.id === oldGame.id);
-            return updated ? { 
-              ...oldGame, 
-              homeScore: updated.homeScore, 
-              awayScore: updated.awayScore,
-              status: updated.status 
-            } : oldGame;
-          })
-        );
+        const freshData = await getAllgames(statusFilter === "ALL" ? undefined : statusFilter);
+        setGames(freshData);
       } catch (err) {
         console.error("Polling failed", err);
       }
@@ -70,40 +63,53 @@ function GamesPage() {
     const intervalId = setInterval(pollScores, 60000); 
     
     return () => clearInterval(intervalId); 
-  }, []); 
+  }, [statusFilter]); 
 
-  const gamesFiltered = statusFilter === 'ALL' ? games : games.filter(g => g.status === statusFilter);
   if (loading) return <div>Loading games...</div>;
   if (error) return <div>{error || "Games failed to load..."}</div>;
 
-  return (
-    <div>
-      <h1>Dashboard</h1>
-      <button onClick={() => setStatusFilter("SCHEDULED")}>
-        Scheduled
-      </button>
-      <button onClick={() => setStatusFilter("LIVE")}>
-        Live
-      </button>
-      <button onClick={() => setStatusFilter("FINAL")}>
-        Final
-      </button>
-      {gamesFiltered.map((game) => (
-        <div key={game.id}>
-          <p>
-            {game.awayTeam} {game.awayScore} - {game.homeTeam} {game.homeScore}
-          </p>
-          <p>{game.status}</p>
-          <p>{game.schedTime}</p>
-          <Link to={`/games/${game.id}`}>
-            <button>View Game</button>
-          </Link>
-          <Link to={`/alerts/`}>
 
-          </Link>
-        </div>
-      ))}
-    </div>
+  return (
+    <main className="games-page">
+      <div className="games-dashboard">
+        <h1>Games Page</h1>
+        <nav className="games-nav">
+          <Link to="/dashboard"> Back to Dashboard </Link>
+        </nav>
+      </div>
+      <div className="games-filter-bar">
+        <button className={statusFilter === "ALL" ? "is-active" : ""} onClick={() => setStatusFilter("ALL")}>
+          All
+        </button>
+        <button className={statusFilter === "SCHEDULED" ? "is-active" : ""} onClick={() => setStatusFilter("SCHEDULED")}>
+          Scheduled
+        </button>
+        <button className={statusFilter === "LIVE" ? "is-active" : ""} onClick={() => setStatusFilter("LIVE")}>
+          Live
+        </button>
+        <button className={statusFilter === "FINAL" ? "is-active" : ""} onClick={() => setStatusFilter("FINAL")}>
+          Final
+        </button>
+      </div>
+      <div className="games-list">
+        {games.map((game) => (
+          <div className="game-list-card" key={game.id}>
+            <div className="game-list-matchup">
+              <span>{game.awayTeam}</span>
+              <strong>{game.awayScore} - {game.homeScore}</strong>
+              <span>{game.homeTeam}</span>
+            </div>
+            <div className="game-list-meta">
+              <span className={`status-pill status-${game.status.toLowerCase()}`}>{game.status}</span>
+              <span>{game.status == 'SCHEDULED' ? formatUserDateTime(game.schedTime) : formatUserDateTime(game.updatedTime)}</span>
+            </div>
+            <Link className="game-card-action" to={`/games/${game.id}`}>
+              View Game
+            </Link>
+          </div>
+        ))}
+      </div>
+    </main>
   );
 }
 

@@ -12,13 +12,18 @@ import java.time.Instant;
 import java.util.List;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.example.sportslivev1.auth.AuthEntryPointJwt;
+import org.example.sportslivev1.auth.AuthTokenFilter;
 import org.example.sportslivev1.controller.GamesController;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Games;
 import org.example.sportslivev1.service.AlertsServiceImp;
 import org.example.sportslivev1.service.GamesServiceImp;
+import org.example.sportslivev1.utils.JwtUtilities;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,12 +31,21 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(GamesController.class)
+@AutoConfigureMockMvc(addFilters = false)
 public class GamesControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
     private GamesServiceImp gamesService;
+    @MockitoBean
+    private JwtUtilities jwtUtilities;
+    @MockitoBean
+    private BCryptPasswordEncoder passwordEncoder;
+    @MockitoBean
+    private AuthTokenFilter authTokenFilter;
+    @MockitoBean
+    private AuthEntryPointJwt authEntryPointJwt;
 
     @Test
     public void getAllGamesTest() throws Exception
@@ -42,7 +56,7 @@ public class GamesControllerTest {
         g1.setId(id);
         Games g2 = new Games("401869188", "Denver Nuggets", "Minnesota Timberwolves", 116, 105, Games.Status.FINAL, Instant.parse("2026-04-18T02:00:00Z"));
         g2.setId(id2);
-        when(gamesService.getAllGames()).thenReturn(List.of(g1, g2));
+        when(gamesService.getAllGames(null)).thenReturn(List.of(g1, g2));
         // for testing purposes
         Instant test = Instant.parse("2026-04-18T02:00:00Z");
         mockMvc.perform(get("/games")
@@ -64,7 +78,7 @@ public class GamesControllerTest {
                 .andExpect(jsonPath("$[1].awayScore").value(105))
                 .andExpect(jsonPath("$[1].status").value("FINAL"))
                 .andExpect(jsonPath("$[1].schedTime").value(test.toString()));
-        verify(gamesService).getAllGames();
+        verify(gamesService).getAllGames(null);
 
     }
     @Test

@@ -25,10 +25,15 @@ public class Scheduler {
 
     @Scheduled(fixedRate = 60000)
     public void scheduleLive() {
-        pollingService.createOrUpdateGame();
+        pollingService.createOrUpdateGame("nba");
+        pollingService.createOrUpdateGame("wnba");
         List<Alerts> newlyTriggered = alertsService.updateAlertsStatus(AlertStatus.CREATED);
         alertsService.updateAlertsStatus(AlertStatus.TRIGGERED); 
-        newlyTriggered.forEach(sseRegistry::broadcast);
+        newlyTriggered.forEach(a -> {
+        if (a.getUser() != null) {
+            sseRegistry.broadcast(a.getUser().getId(), a);
+        }
+        });
     }
 
 }
