@@ -3,7 +3,30 @@ import { BASE_URL, clearJwtToken, getJwtToken, getUserId } from "../../api/utils
 import { Outlet } from "react-router-dom";
 import { ProtectedRoute } from "../protectionRouter/router";
 
+const SEEN_ALERT_EVENT_IDS_KEY = "seenAlertEventIds";
+const MAX_SEEN_ALERT_EVENTS = 100;
+
+function getSeenAlertEventIds() {
+    try {
+        const saved = localStorage.getItem(SEEN_ALERT_EVENT_IDS_KEY);
+        return new Set<string>(saved ? JSON.parse(saved) : []);
+    } catch {
+        return new Set<string>();
+    }
+}
+
+function saveSeenAlertEventIds(seenIds: Set<string>) {
+    const latestIds = [...seenIds].slice(-MAX_SEEN_ALERT_EVENTS);
+    localStorage.setItem(SEEN_ALERT_EVENT_IDS_KEY, JSON.stringify(latestIds));
+}
+
 function readSseMessage(message: string) {
+    const id = message
+        .split("\n")
+        .find(line => line.startsWith("id:"))
+        ?.slice(3)
+        .trim();
+
     const data = message
         .split("\n")
         .filter(line => line.startsWith("data:"))
@@ -11,6 +34,13 @@ function readSseMessage(message: string) {
         .join("\n");
 
     if (!data) return;
+    if (id) {
+        const seenIds = getSeenAlertEventIds();
+        if (seenIds.has(id)) return;
+
+        seenIds.add(id);
+        saveSeenAlertEventIds(seenIds);
+    }
 
     const alertData = JSON.parse(data);
     alert(`Alert triggered: ${alertData.teamName}`);

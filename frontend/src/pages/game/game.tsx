@@ -13,9 +13,10 @@ type Game = {
     updatedTime: any;
   }
 
-async function getAllgames() : Promise<Game[]>
+async function getAllgames(status?: GameStatus) : Promise<Game[]>
 {
-  const res = await apiFetch("/games");
+  const query = status ? `?status=${status}` : "";
+  const res = await apiFetch(`/games${query}`);
 
   if (!res.ok) {
     throw new Error(await getResponseErrorMessage(res));
@@ -33,7 +34,7 @@ function GamesPage() {
   useEffect(() => {
     async function loadGames() {
       try {
-        const data = await getAllgames();
+        const data = await getAllgames(statusFilter === "ALL" ? undefined : statusFilter);
 
         setGames(data);
       }
@@ -47,13 +48,14 @@ function GamesPage() {
       }
     } 
     loadGames();
-  }, []); 
+  }, [statusFilter]); 
 
   useEffect(() => {
     const pollScores = async () => {
       try {
-        const freshData = await getAllgames();
+        const freshData = await getAllgames(statusFilter === "ALL" ? undefined : statusFilter);
         
+<<<<<<< Updated upstream
         setGames(prevGames => 
           prevGames.map(oldGame => {
             const updated = freshData.find(g => g.id === oldGame.id);
@@ -66,6 +68,9 @@ function GamesPage() {
             } : oldGame;
           })
         );
+=======
+        setGames(freshData);
+>>>>>>> Stashed changes
       } catch (err) {
         console.error("Polling failed", err);
       }
@@ -74,9 +79,8 @@ function GamesPage() {
     const intervalId = setInterval(pollScores, 60000); 
     
     return () => clearInterval(intervalId); 
-  }, []); 
+  }, [statusFilter]); 
 
-  const gamesFiltered = statusFilter === 'ALL' ? games : games.filter(g => g.status === statusFilter);
   if (loading) return <div>Loading games...</div>;
   if (error) return <div>{error || "Games failed to load..."}</div>;
 
@@ -104,7 +108,7 @@ function GamesPage() {
         </button>
       </div>
       <div className="games-list">
-        {gamesFiltered.map((game) => (
+        {games.map((game) => (
           <div className="game-list-card" key={game.id}>
             <div className="game-list-matchup">
               <span>{game.awayTeam}</span>

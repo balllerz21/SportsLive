@@ -297,6 +297,8 @@ code {
 
 .games-filter-bar button,
 .alerts-filter-bar button,
+.alerts-filter-bar input,
+.alerts-filter-bar select,
 .primary-action,
 .modal-actions button,
 .game-card-action {
@@ -308,6 +310,16 @@ code {
   font: inherit;
   text-decoration: none;
   cursor: pointer;
+}
+
+.alerts-filter-bar input,
+.alerts-filter-bar select {
+  min-height: 43px;
+}
+
+.alerts-filter-bar input {
+  min-width: 190px;
+  cursor: text;
 }
 
 .games-filter-bar button.is-active,

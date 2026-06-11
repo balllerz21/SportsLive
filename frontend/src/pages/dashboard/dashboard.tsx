@@ -51,16 +51,20 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  async function refreshDashboard() {
+    const [games, alerts] = await Promise.all([
+      getLiveGames(),
+      getActiveAlerts(),
+    ]);
+
+    setLiveGames(games);
+    setActiveAlerts(alerts);
+  }
+
   useEffect(() => {
     async function loadDashboard() {
       try {
-        const [games, alerts] = await Promise.all([
-          getLiveGames(),
-          getActiveAlerts(),
-        ]);
-
-        setLiveGames(games);
-        setActiveAlerts(alerts);
+        await refreshDashboard();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load dashboard");
       } finally {
@@ -69,6 +73,18 @@ function DashboardPage() {
     }
 
     loadDashboard();
+  }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(async () => {
+      try {
+        await refreshDashboard();
+      } catch (err) {
+        console.error("Dashboard polling failed", err);
+      }
+    }, 60000);
+
+    return () => window.clearInterval(intervalId);
   }, []);
 
   if (loading) return <div className="dashboard-page">Loading dashboard...</div>;
