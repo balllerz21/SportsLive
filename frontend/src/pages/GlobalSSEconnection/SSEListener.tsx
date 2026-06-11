@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BASE_URL, clearJwtToken, getJwtToken, getUserId } from "../../api/utils";
 import { Outlet } from "react-router-dom";
 import { ProtectedRoute } from "../protectionRouter/router";
+import { FiBell, FiX } from "react-icons/fi";
 
 const SEEN_ALERT_EVENT_IDS_KEY = "seenAlertEventIds";
 const MAX_SEEN_ALERT_EVENTS = 100;
@@ -20,7 +21,12 @@ function saveSeenAlertEventIds(seenIds: Set<string>) {
     localStorage.setItem(SEEN_ALERT_EVENT_IDS_KEY, JSON.stringify(latestIds));
 }
 
-function readSseMessage(message: string) {
+type AlertNotification = {
+    id?: string;
+    teamName: string;
+};
+
+function readSseMessage(message: string): AlertNotification | null {
     const id = message
         .split("\n")
         .find(line => line.startsWith("id:"))
@@ -33,20 +39,23 @@ function readSseMessage(message: string) {
         .map(line => line.slice(5).trimStart())
         .join("\n");
 
-    if (!data) return;
+    if (!data) return null;
     if (id) {
         const seenIds = getSeenAlertEventIds();
-        if (seenIds.has(id)) return;
+        if (seenIds.has(id)) return null;
 
         seenIds.add(id);
         saveSeenAlertEventIds(seenIds);
     }
 
     const alertData = JSON.parse(data);
-    alert(`Alert triggered: ${alertData.teamName}`);
+    return {
+        id,
+        teamName: alertData.teamName,
+    };
 }
 
-function GlobalSSEListener()
+function GlobalSSEListener({ onAlert }: { onAlert: (alert: AlertNotification) => void })
 {
     useEffect(() => {
         const userId = getUserId();
@@ -87,7 +96,12 @@ function GlobalSSEListener()
                         buffer += decoder.decode(value, { stream: true });
                         const messages = buffer.split(/\r?\n\r?\n/);
                         buffer = messages.pop() ?? "";
-                        messages.forEach(readSseMessage);
+                        messages.forEach(message => {
+                            const alertNotification = readSseMessage(message);
+                            if (alertNotification) {
+                                onAlert(alertNotification);
+                            }
+                        });
                     }
                 } catch {
                     if (controller.signal.aborted) return;
@@ -101,14 +115,35 @@ function GlobalSSEListener()
         return () => {
             controller.abort();
         };
-    }, []);
+    }, [onAlert]);
 
     return null;
 }
+
 export default function ProtectedSSELayout() {
+  const [notification, setNotification] = useState<AlertNotification | null>(null);
+
   return (
     <ProtectedRoute>
-      <GlobalSSEListener />
+      <GlobalSSEListener onAlert={setNotification} />
+      {notification && (
+        <div className="alert-banner" role="status" aria-live="polite">
+          <FiBell className="alert-banner-icon" aria-hidden="true" />
+          <div className="alert-banner-content">
+            <strong>Alert triggered</strong>
+            <span>{notification.teamName}</span>
+          </div>
+          <button
+            className="alert-banner-dismiss"
+            type="button"
+            aria-label="Dismiss alert"
+            title="Dismiss alert"
+            onClick={() => setNotification(null)}
+          >
+            <FiX aria-hidden="true" />
+          </button>
+        </div>
+      )}
       <Outlet />
     </ProtectedRoute>
   );

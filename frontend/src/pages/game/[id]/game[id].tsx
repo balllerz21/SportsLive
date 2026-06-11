@@ -129,12 +129,9 @@ function GamePage() {
     <main className="game-detail-page">
       <div className="game-detail-header">
         <h1>Game Details</h1>
-          <nav className="games-nav">
-            <Link to="/dashboard"> Back to Dashboard </Link>
-          </nav>
-          <Link to="/games"> Back to Games Page </Link>
         <nav className="games-nav">
-          <Link to="/dashboard"> Back to Dashboard </Link>
+          <Link to="/dashboard">Back to Dashboard</Link>
+          <Link to="/games">Back to Games</Link>
         </nav>
         <button className="primary-action" onClick={openModal}>+ Create Alert</button>
       </div>

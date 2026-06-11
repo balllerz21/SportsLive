@@ -1,4 +1,4 @@
-import { useState, useEffect} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch, formatUserDateTime, getResponseErrorMessage } from '../../api/utils';
 type AlertType = 'SCORE_OVER' | 'SCORE_UNDER';
@@ -58,7 +58,7 @@ function AlertsList() {
   const [teamFilter, setTeamFilter] = useState('');
   const [periodFilter, setPeriodFilter] = useState<FilterPeriod>('ALL');
 
-  async function refreshAlerts() {
+  const refreshAlerts = useCallback(async () => {
     const data = await getAlerts({
       status: statusFilter,
       alertType: typeFilter,
@@ -66,7 +66,7 @@ function AlertsList() {
       period: periodFilter,
     });
     setAlerts(data);
-  }
+  }, [statusFilter, typeFilter, teamFilter, periodFilter]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -88,7 +88,7 @@ function AlertsList() {
     }, 300);
 
     return () => window.clearTimeout(timeoutId);
-    }, [statusFilter, typeFilter, teamFilter, periodFilter]);
+    }, [refreshAlerts]);
 
   useEffect(() => {
     const intervalId = window.setInterval(async () => {
@@ -100,7 +100,7 @@ function AlertsList() {
     }, 60000);
 
     return () => window.clearInterval(intervalId);
-  }, [statusFilter, typeFilter, teamFilter, periodFilter]);
+  }, [refreshAlerts]);
 
   if (loading) return <div className="alerts-page">Loading alerts...</div>;
   if(error) return <div className="alerts-page">{error || "Alerts failed to load..."}</div>;

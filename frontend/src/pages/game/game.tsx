@@ -8,9 +8,9 @@ type Game = {
     homeScore : number;
     awayTeam : string;
     awayScore : number;
-    schedTime : any;
+    schedTime : string;
     status : GameStatus;
-    updatedTime: any;
+    updatedTime: string;
   }
 
 async function getAllgames(status?: GameStatus) : Promise<Game[]>
@@ -54,19 +54,6 @@ function GamesPage() {
     const pollScores = async () => {
       try {
         const freshData = await getAllgames(statusFilter === "ALL" ? undefined : statusFilter);
-        
-        setGames(prevGames => 
-          prevGames.map(oldGame => {
-            const updated = freshData.find(g => g.id === oldGame.id);
-            return updated ? { 
-              ...oldGame, 
-              homeScore: updated.homeScore, 
-              awayScore: updated.awayScore,
-              status: updated.status, 
-              updatedTime: updated.updatedTime
-            } : oldGame;
-          })
-        );
         setGames(freshData);
       } catch (err) {
         console.error("Polling failed", err);
