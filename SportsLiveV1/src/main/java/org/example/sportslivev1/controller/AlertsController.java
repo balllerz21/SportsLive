@@ -27,6 +27,7 @@ import java.security.Principal;
 import java.time.Instant;
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,7 +44,7 @@ public class AlertsController {
     UsersServiceImpl service3;
     
     @PostMapping("/add")
-    public ResponseEntity<AlertResponse> add(@RequestBody AlertsRequest alert, Principal principal) {
+    public ResponseEntity<AlertResponse> add(@Valid @RequestBody AlertsRequest alert, Principal principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
