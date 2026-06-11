@@ -9,8 +9,11 @@ import org.example.sportslivev1.entity.SecureUsers;
 import org.example.sportslivev1.entity.Users;
 import org.example.sportslivev1.service.UsersServiceImpl;
 import org.example.sportslivev1.utils.JwtUtilities;
+
+import java.security.Principal;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -68,14 +72,17 @@ public class UsersController {
         return ResponseEntity.ok(UsersMapper.toUserResponse(newUser));
     }
     @GetMapping("/profile/{id}")
-    public ResponseEntity<?> getProfile(@PathVariable Long id) {
+    public ResponseEntity<?> getProfile(@PathVariable Long id, Principal principal) {
         Users user;
-        try {
-            user = usersService.getUserById(id);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.notFound().build();
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
-        if (user == null) {
+        try {
+            user = usersService.getUserByUserName(principal.getName());
+            if (!user.getId().equals(id)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized");
+            }
+        } catch (UsernameNotFoundException ex) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(UsersMapper.toUserResponse(user));
