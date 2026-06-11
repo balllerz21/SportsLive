@@ -1,6 +1,5 @@
 package org.example.sportslivev1.service;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,7 +7,6 @@ import org.example.sportslivev1.entity.*;
 import org.example.sportslivev1.repository.GamesRepo;
 import org.example.sportslivev1.specifications.GamesSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;

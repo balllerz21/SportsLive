@@ -2,7 +2,6 @@ package org.example.sportslivev1.dto;
 
 import java.util.List;
 
-import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Users;
 
 public class UserResponse {

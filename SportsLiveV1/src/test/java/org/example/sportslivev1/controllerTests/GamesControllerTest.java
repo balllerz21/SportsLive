@@ -1,7 +1,5 @@
 package org.example.sportslivev1.controllerTests;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -10,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 import java.util.List;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.example.sportslivev1.auth.AuthEntryPointJwt;
@@ -18,7 +15,6 @@ import org.example.sportslivev1.auth.AuthTokenFilter;
 import org.example.sportslivev1.controller.GamesController;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Games;
-import org.example.sportslivev1.service.AlertsServiceImp;
 import org.example.sportslivev1.service.GamesServiceImp;
 import org.example.sportslivev1.utils.JwtUtilities;
 import org.junit.jupiter.api.Test;
@@ -28,7 +24,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(GamesController.class)
 @AutoConfigureMockMvc(addFilters = false)

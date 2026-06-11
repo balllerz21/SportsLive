@@ -1,7 +1,6 @@
 package org.example.sportslivev1.dto;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.example.sportslivev1.entity.Games;

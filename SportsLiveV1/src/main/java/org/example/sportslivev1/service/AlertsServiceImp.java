@@ -1,8 +1,6 @@
 package org.example.sportslivev1.service;
-import org.example.sportslivev1.client.EspnClientAPI;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Alerts.AlertStatus;
-import org.example.sportslivev1.entity.Alerts.AlertType;
 import org.example.sportslivev1.entity.Games;
 import org.example.sportslivev1.entity.Users;
 import org.example.sportslivev1.repository.AlertsRepo;
@@ -11,7 +9,6 @@ import org.example.sportslivev1.repository.UsersRepo;
 import org.example.sportslivev1.specifications.AlertsSpecifications;
 import org.example.sportslivev1.utils.Utilities;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -25,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.naming.NameNotFoundException;
 
 
 @Service

@@ -1,6 +1,5 @@
 package org.example.sportslivev1.controllerTests;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -13,7 +12,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
-import java.util.List;
 
 import org.example.sportslivev1.auth.AuthEntryPointJwt;
 import org.example.sportslivev1.auth.AuthTokenFilter;

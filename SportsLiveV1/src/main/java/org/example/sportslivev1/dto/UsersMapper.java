@@ -3,8 +3,6 @@ package org.example.sportslivev1.dto;
 import java.util.List;
 
 import org.example.sportslivev1.entity.Users;
-import org.example.sportslivev1.dto.AlertMapper;
-import org.example.sportslivev1.dto.AlertResponse;
 
 public class UsersMapper {
     public static UserResponse toUserResponse(Users user) {

@@ -7,11 +7,7 @@ import org.example.sportslivev1.DemoApplication;
 import org.example.sportslivev1.controller.AlertsController;
 import org.example.sportslivev1.dto.AlertsRequest;
 import org.example.sportslivev1.entity.Alerts;
-import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.example.sportslivev1.entity.Games;
-import org.example.sportslivev1.entity.Users;
-import org.example.sportslivev1.repository.GamesRepo;
-import org.example.sportslivev1.repository.UsersRepo;
 import org.example.sportslivev1.service.GamesServiceImp;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,16 +28,12 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.security.cert.PKIXRevocationChecker.Option;
 import java.util.List;
-import java.util.Optional;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.nullValue;
 
 import jakarta.servlet.ServletContext;
 import tools.jackson.databind.ObjectMapper;

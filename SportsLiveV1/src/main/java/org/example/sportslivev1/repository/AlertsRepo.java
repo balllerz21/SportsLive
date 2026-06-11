@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.time.Instant;
 
 import org.example.sportslivev1.entity.*;
-import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;

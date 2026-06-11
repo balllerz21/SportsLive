@@ -3,12 +3,9 @@ package org.example.sportslivev1.scheduler;
 import java.util.List;
 
 import org.example.sportslivev1.entity.Alerts;
-import org.example.sportslivev1.entity.Games;
 import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.example.sportslivev1.serversideevents.SSERegistry;
 import org.example.sportslivev1.service.AlertsServiceImp;
-import org.example.sportslivev1.service.GamesService;
-import org.example.sportslivev1.service.GamesServiceImp;
 import org.example.sportslivev1.service.PollingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
