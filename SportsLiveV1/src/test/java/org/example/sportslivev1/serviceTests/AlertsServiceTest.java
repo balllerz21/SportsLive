@@ -40,6 +40,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -82,7 +83,7 @@ public class AlertsServiceTest {
             "Golden State Warriors",
             121,
             110,
-            Games.Status.FINAL,
+            Games.Status.LIVE,
             Instant.parse("2026-04-18T02:00:00Z"));
         Users user = new Users("testuser", "password", UserRole.USER);
         test.setId(id);
@@ -111,7 +112,7 @@ public class AlertsServiceTest {
             "Golden State Warriors",
             121,
             110,
-            Games.Status.FINAL,
+            Games.Status.LIVE,
             Instant.parse("2026-04-18T02:00:00Z"));
         test.setId(id);
         Users user = new Users("testuser", "password", UserRole.USER);
@@ -132,7 +133,7 @@ public class AlertsServiceTest {
             "Golden State Warriors",
             121,
             110,
-            Games.Status.FINAL,
+            Games.Status.SCHEDULED,
             Instant.parse("2026-04-18T02:00:00Z"));
         test.setId(id);
         Users user = new Users("testuser", "password", UserRole.USER);
@@ -152,7 +153,7 @@ public class AlertsServiceTest {
     {
         Alerts a1 = buildAlerts();
         Alerts a2 = new Alerts(a1.getGame(), "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 100);
-        when(alertsRepo.findAll(any(Specification.class))).thenReturn(List.of(a1, a2));
+        when(alertsRepo.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(a1, a2));
         List<Alerts> listAlerts = alertsService.getAllAlerts(null, null, null, null);
 
         assertEquals(2, listAlerts.size());
@@ -167,7 +168,7 @@ public class AlertsServiceTest {
         Alerts a2 = new Alerts(a1.getGame(), "Golden State Warriors", Alerts.AlertType.SCORE_UNDER, 100);
         a2.setAlertStatus(Alerts.AlertStatus.TRIGGERED);
 
-        when(alertsRepo.findAll(any(Specification.class))).thenReturn(List.of(a1, a2)).thenReturn(List.of(a1, a2)).thenReturn(List.of(a2)).thenReturn(List.of(a1));
+        when(alertsRepo.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(a1, a2)).thenReturn(List.of(a1, a2)).thenReturn(List.of(a2)).thenReturn(List.of(a1));
 
         // testing date query
         List<Alerts> listAlertsDate = alertsService.getAllAlerts(null, null, null, "weekly");

@@ -407,4 +407,36 @@ public class AlertsControllerTest {
                 verify(alertsService).getAlertById(7L);
                 verify(alertsService).deleteAlert(7L);
         }
+
+        @Test
+        void acknowledgeAlertSetsNotifiedAtTest() throws Exception {
+                Alerts alert = new Alerts(null, "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 120);
+                alert.setId(7L);
+                alert.setUser(user("testuser", 1L));
+
+                when(alertsService.getAlertById(7L)).thenReturn(alert);
+                when(alertsService.saveAlert(any(Alerts.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+                mockMvc.perform(post("/alerts/7/ack")
+                        .principal(principal("testuser")))
+                        .andExpect(status().isNoContent());
+
+                verify(alertsService).getAlertById(7L);
+                verify(alertsService).saveAlert(alert);
+        }
+
+        @Test
+        void acknowledgeAlertRejectsWrongUserTest() throws Exception {
+                Alerts alert = new Alerts(null, "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 120);
+                alert.setId(7L);
+                alert.setUser(user("otheruser", 2L));
+
+                when(alertsService.getAlertById(7L)).thenReturn(alert);
+
+                mockMvc.perform(post("/alerts/7/ack")
+                        .principal(principal("testuser")))
+                        .andExpect(status().isForbidden());
+
+                verify(alertsService).getAlertById(7L);
+        }
 }

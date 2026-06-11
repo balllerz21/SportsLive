@@ -11,7 +11,7 @@ public class AlertsSpecifications {
     }
     // user can search by team
     public static Specification<Alerts> hasTeam(String team) {
-        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("teamName"), team);
+        return (root, query, criteriaBuilder) -> criteriaBuilder.like(criteriaBuilder.lower(root.get("teamName")), team.toLowerCase());
     }
     // user can search by game
     public static Specification<Alerts> hasGameId(Long gameId) {

@@ -58,6 +58,19 @@ public class SSETests {
     }
 
     @Test
+    public void subscribe_replacesExistingEmitterForClientId() {
+        SseEmitter oldEmitter = mock(SseEmitter.class);
+        injectEmitters(Map.of(1L, oldEmitter));
+
+        SseEmitter newEmitter = registry.subscribe(1L);
+
+        Map<Long, SseEmitter> emitters =
+            (Map<Long, SseEmitter>) ReflectionTestUtils.getField(registry, "emitters");
+        assertThat(emitters).containsEntry(1L, newEmitter);
+        verify(oldEmitter).complete();
+    }
+
+    @Test
     public void broadcast_sendsOnlyToMatchingSubscriber() throws IOException {
         SseEmitter matching = mock(SseEmitter.class);
         SseEmitter other = mock(SseEmitter.class);
