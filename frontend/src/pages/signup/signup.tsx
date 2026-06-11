@@ -26,7 +26,7 @@ const SignUpPage: React.FC = () => {
             return;
         }
         try {
-            const res = await fetch("http://localhost:8080/users/signup", {
+            const res = await fetch("users/signup", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
