@@ -4,11 +4,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.example.sportslivev1.client.EspnClientAPI;
 import org.example.sportslivev1.entity.Games;
@@ -97,9 +95,9 @@ public class PollingService {
         return games;
     }
 
-    public void createOrUpdateGame(String site) {
+    public void createOrUpdateGame(String sport, String site) {
         List<Games> games = new ArrayList<>();
-        String rawJson = espnApiClient.getScoreBoard(site);
+        String rawJson = espnApiClient.getScoreBoard(sport, site);
         ObjectMapper objectMapper = new ObjectMapper();
 
         try {

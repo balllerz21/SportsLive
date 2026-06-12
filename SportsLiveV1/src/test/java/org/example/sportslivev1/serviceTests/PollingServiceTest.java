@@ -1,11 +1,9 @@
 package org.example.sportslivev1.serviceTests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 
 import org.example.sportslivev1.client.EspnClientAPI;
 import org.example.sportslivev1.entity.Games;
@@ -68,10 +66,10 @@ public class PollingServiceTest {
         }
         """;
 
-        when(espnApiClient.getScoreBoard("nba")).thenReturn(rawJson);
+        when(espnApiClient.getScoreBoard("basketball", "nba")).thenReturn(rawJson);
         ArgumentCaptor<Games> gameCaptor = ArgumentCaptor.forClass(Games.class);
 
-        pollingService.createOrUpdateGame("nba");
+        pollingService.createOrUpdateGame("basketball", "nba");
 
         verify(gamesService).saveGame(gameCaptor.capture());
 

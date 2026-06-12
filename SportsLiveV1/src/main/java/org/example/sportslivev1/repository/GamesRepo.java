@@ -1,6 +1,5 @@
 package org.example.sportslivev1.repository;
 
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -11,7 +10,6 @@ import java.util.Optional;
 import org.example.sportslivev1.entity.*;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 // Adding later: more querying on teams and time.
 @Repository

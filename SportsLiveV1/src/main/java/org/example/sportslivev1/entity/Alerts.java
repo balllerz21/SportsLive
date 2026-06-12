@@ -7,11 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 
 // Done: Change createdAt and isActive to backend instead of user controlled
 import java.time.Instant;
-import java.util.List;
 @Entity
 public class Alerts {
     @Id

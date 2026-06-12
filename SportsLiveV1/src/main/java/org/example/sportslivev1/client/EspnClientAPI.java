@@ -13,8 +13,8 @@ public class EspnClientAPI {
                 .baseUrl("https://site.api.espn.com")
                 .build();
     }
-    public String getScoreBoard(String site)
+    public String getScoreBoard(String sport, String site)
     {
-        return this.espn.get().uri("/apis/site/v2/sports/basketball/{site}/scoreboard", site).retrieve().body(String.class);
+        return this.espn.get().uri("/apis/site/v2/sports/{sport}/{site}/scoreboard", sport, site).retrieve().body(String.class);
     }
 }

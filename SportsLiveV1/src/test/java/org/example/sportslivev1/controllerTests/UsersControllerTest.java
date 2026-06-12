@@ -1,6 +1,5 @@
 package org.example.sportslivev1.controllerTests;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -11,9 +10,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.util.List;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+
 
 import org.example.sportslivev1.auth.AuthEntryPointJwt;
 import org.example.sportslivev1.auth.AuthTokenFilter;
@@ -68,6 +69,9 @@ public class UsersControllerTest {
     @MockitoBean
     private AuthEntryPointJwt authEntryPointJwt;
 
+    private UsernamePasswordAuthenticationToken principal(String username) {
+        return new UsernamePasswordAuthenticationToken(username, null, List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")));
+    }
     private UserRequest buildRequest(String username, String password, UserRole role) {
         UserRequest request = new UserRequest();
         request.setUsername(username);
@@ -169,9 +173,10 @@ public class UsersControllerTest {
         Users user = new Users("profileuser", "encoded-password", UserRole.ADMIN);
         user.setId(7L);
 
-        when(usersService.getUserById(7L)).thenReturn(user);
+        when(usersService.getUserByUserName("profileuser")).thenReturn(user);
 
         mockMvc.perform(get("/users/profile/7")
+                .principal(principal("profileuser"))
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("profileuser"))
@@ -179,18 +184,35 @@ public class UsersControllerTest {
                 .andExpect(jsonPath("$.alerts").isArray())
                 .andExpect(jsonPath("$.alerts").isEmpty());
 
-        verify(usersService).getUserById(7L);
+        verify(usersService).getUserByUserName("profileuser");
+    }
+
+    @Test
+    public void getProfileForbiddenTest() throws Exception {
+        Users user = new Users("profileuser", "encoded-password", UserRole.USER);
+        user.setId(7L);
+
+        when(usersService.getUserByUserName("profileuser")).thenReturn(user);
+
+        mockMvc.perform(get("/users/profile/99")
+                .principal(principal("profileuser"))
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+
+        verify(usersService).getUserByUserName("profileuser");
     }
 
     @Test
     public void getProfileNotFoundTest() throws Exception {
-        when(usersService.getUserById(99L)).thenThrow(new IllegalArgumentException("User ID not found"));
+        when(usersService.getUserByUserName("unknownuser"))
+            .thenThrow(new UsernameNotFoundException("User not found"));
 
         mockMvc.perform(get("/users/profile/99")
+                .principal(principal("unknownuser"))
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
 
-        verify(usersService).getUserById(99L);
+        verify(usersService).getUserByUserName("unknownuser");
     }
 
     private void assertLoginToken(UsernamePasswordAuthenticationToken token) {
