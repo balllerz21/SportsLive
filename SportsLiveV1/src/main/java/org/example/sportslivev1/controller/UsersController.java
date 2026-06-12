@@ -79,6 +79,9 @@ public class UsersController {
         }
         try {
             user = usersService.getUserByUserName(principal.getName());
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
             if (!user.getId().equals(id)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized");
             }
