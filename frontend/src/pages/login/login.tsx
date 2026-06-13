@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FaEye } from "react-icons/fa6";
 import { FaEyeSlash } from "react-icons/fa6";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../../api/utils";
 const LoginPage: React.FC = () => {
     const [username, setUsername] = useState('');
@@ -67,7 +67,7 @@ const LoginPage: React.FC = () => {
             </div>
 
             <p className="login-bottom-p">
-                Don't have an account? <a href="/signup">Sign Up</a>
+                Don't have an account? <Link to="/signup">Sign Up</Link>
             </p>
             </div>
         );

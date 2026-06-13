@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FaEye } from "react-icons/fa6";
 import { FaEyeSlash } from "react-icons/fa6";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { apiFetch, getResponseErrorMessage, loginUser } from "../../api/utils";
 
 const SignUpPage: React.FC = () => {
@@ -76,6 +76,9 @@ const SignUpPage: React.FC = () => {
                 <button type="submit" className="login-btn">Sign Up</button>
                 </form>
             </div>
+            <p className="login-bottom-p">
+                Already have an account? <Link to="/">Log In</Link>
+            </p>
             </div>
         );
     };   
