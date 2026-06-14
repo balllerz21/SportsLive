@@ -28,7 +28,7 @@ type AlertDto = {
 };
 
 async function getLiveGames() {
-  const res = await apiFetch("/games?status=LIVE");
+  const res = await apiFetch("/games?status=LIVE&size=20&sort=updatedTime,desc");
   if (!res.ok) {
     throw new Error(await getResponseErrorMessage(res));
   }

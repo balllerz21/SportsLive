@@ -7,7 +7,7 @@ import org.example.sportslivev1.entity.*;
 import org.example.sportslivev1.repository.GamesRepo;
 import org.example.sportslivev1.specifications.GamesSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -43,14 +43,14 @@ public class GamesServiceImp implements GamesService {
         return gamesRepo.findByActualGameId(gane_id);
     }
     @Override
-    public List<Games> getAllGames(Games.Status stat)
+    public List<Games> getAllGames(Games.Status stat, Pageable pageable)
     {
         Specification<Games> spec = Specification.unrestricted();
         if (stat != null)
         {
             spec = spec.and(GamesSpecifications.hasStatus(stat));
         }
-        return (List<Games>) gamesRepo.findAll(spec, Sort.by("updatedTime").descending());
+        return gamesRepo.findAll(spec, pageable).getContent();
     }
     @Override
     public List<Games> getGamesByStatus(Games.Status stat)

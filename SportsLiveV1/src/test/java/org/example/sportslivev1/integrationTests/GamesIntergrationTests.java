@@ -9,6 +9,7 @@ import org.example.sportslivev1.controller.GamesController;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockServletContext;
@@ -30,7 +31,7 @@ import jakarta.servlet.ServletContext;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { DemoApplication.class })
 @WebAppConfiguration
-
+@EnabledIfEnvironmentVariable(named = "RUN_LIVE_INTEGRATION_TESTS", matches = "true")
 public class GamesIntergrationTests {
     @Autowired
     private WebApplicationContext webApplicationContext;

@@ -13,10 +13,19 @@ type Game = {
     updatedTime: string;
   }
 
-async function getAllgames(status?: GameStatus) : Promise<Game[]>
+const PAGE_SIZE = 50;
+
+async function getAllgames(page: number, status?: GameStatus) : Promise<Game[]>
 {
-  const query = status ? `?status=${status}` : "";
-  const res = await apiFetch(`/games${query}`);
+  const query = new URLSearchParams({
+    size: String(PAGE_SIZE),
+    page: String(page),
+    sort: "updatedTime,desc",
+  });
+  if (status) {
+    query.set("status", status);
+  }
+  const res = await apiFetch(`/games?${query}`);
 
   if (!res.ok) {
     throw new Error(await getResponseErrorMessage(res));
@@ -31,10 +40,19 @@ function GamesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('ALL');
+  const [page, setPage] = useState(0);
+
+  const selectStatus = (status: FilterStatus) => {
+    setStatusFilter(status);
+    setPage(0);
+  };
+
   useEffect(() => {
     async function loadGames() {
+      setLoading(true);
+      setError(null);
       try {
-        const data = await getAllgames(statusFilter === "ALL" ? undefined : statusFilter);
+        const data = await getAllgames(page, statusFilter === "ALL" ? undefined : statusFilter);
 
         setGames(data);
       }
@@ -46,24 +64,24 @@ function GamesPage() {
       finally {
         setLoading(false);
       }
-    } 
+    }
     loadGames();
-  }, [statusFilter]); 
+  }, [page, statusFilter]);
 
   useEffect(() => {
     const pollScores = async () => {
       try {
-        const freshData = await getAllgames(statusFilter === "ALL" ? undefined : statusFilter);
+        const freshData = await getAllgames(page, statusFilter === "ALL" ? undefined : statusFilter);
         setGames(freshData);
       } catch (err) {
         console.error("Polling failed", err);
       }
     };
 
-    const intervalId = setInterval(pollScores, 60000); 
-    
-    return () => clearInterval(intervalId); 
-  }, [statusFilter]); 
+    const intervalId = setInterval(pollScores, 60000);
+
+    return () => clearInterval(intervalId);
+  }, [page, statusFilter]);
 
   if (loading) return <div>Loading games...</div>;
   if (error) return <div>{error || "Games failed to load..."}</div>;
@@ -78,16 +96,16 @@ function GamesPage() {
         </nav>
       </div>
       <div className="games-filter-bar">
-        <button className={statusFilter === "ALL" ? "is-active" : ""} onClick={() => setStatusFilter("ALL")}>
+        <button className={statusFilter === "ALL" ? "is-active" : ""} onClick={() => selectStatus("ALL")}>
           All
         </button>
-        <button className={statusFilter === "SCHEDULED" ? "is-active" : ""} onClick={() => setStatusFilter("SCHEDULED")}>
+        <button className={statusFilter === "SCHEDULED" ? "is-active" : ""} onClick={() => selectStatus("SCHEDULED")}>
           Scheduled
         </button>
-        <button className={statusFilter === "LIVE" ? "is-active" : ""} onClick={() => setStatusFilter("LIVE")}>
+        <button className={statusFilter === "LIVE" ? "is-active" : ""} onClick={() => selectStatus("LIVE")}>
           Live
         </button>
-        <button className={statusFilter === "FINAL" ? "is-active" : ""} onClick={() => setStatusFilter("FINAL")}>
+        <button className={statusFilter === "FINAL" ? "is-active" : ""} onClick={() => selectStatus("FINAL")}>
           Final
         </button>
       </div>
@@ -109,6 +127,15 @@ function GamesPage() {
           </div>
         ))}
       </div>
+      <nav className="games-pagination" aria-label="Games pages">
+        <button type="button" disabled={page === 0} onClick={() => setPage(current => current - 1)}>
+          Previous
+        </button>
+        <span>Page {page + 1}</span>
+        <button type="button" disabled={games.length < PAGE_SIZE} onClick={() => setPage(current => current + 1)}>
+          Next
+        </button>
+      </nav>
     </main>
   );
 }

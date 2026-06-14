@@ -12,6 +12,7 @@ import org.example.sportslivev1.service.GamesServiceImp;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +46,7 @@ import org.slf4j.LoggerFactory;
 @AutoConfigureMockMvc(addFilters = false)
 @ContextConfiguration(classes = { DemoApplication.class })
 @WebAppConfiguration
+@EnabledIfEnvironmentVariable(named = "RUN_LIVE_INTEGRATION_TESTS", matches = "true")
 // DONE: Fix this layout as users should not be created to check alerts logic.
 // DONE: Fix tests - the fix was to add auth and basically search for games that are available.
 public class AlertsIntregationTests {

@@ -428,6 +428,29 @@ code {
   gap: 12px;
 }
 
+.games-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.games-pagination button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  color: var(--text-h);
+  background: var(--bg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.games-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .alerts-list {
   padding: 0;
   margin: 0;

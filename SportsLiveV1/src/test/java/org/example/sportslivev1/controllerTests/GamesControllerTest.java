@@ -2,16 +2,19 @@ package org.example.sportslivev1.controllerTests;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.example.sportslivev1.auth.AuthEntryPointJwt;
 import org.example.sportslivev1.auth.AuthTokenFilter;
+import org.example.sportslivev1.config.PageableConfig;
 import org.example.sportslivev1.controller.GamesController;
 import org.example.sportslivev1.entity.Alerts;
 import org.example.sportslivev1.entity.Games;
@@ -22,11 +25,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 
 @WebMvcTest(GamesController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(PageableConfig.class)
 public class GamesControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -51,7 +56,10 @@ public class GamesControllerTest {
         g1.setId(id);
         Games g2 = new Games("401869188", "Denver Nuggets", "Minnesota Timberwolves", 116, 105, Games.Status.FINAL, Instant.parse("2026-04-18T02:00:00Z"));
         g2.setId(id2);
-        when(gamesService.getAllGames(null)).thenReturn(List.of(g1, g2));
+        when(gamesService.getAllGames(
+                org.mockito.ArgumentMatchers.isNull(),
+                argThat(pageable -> hasPage(pageable, 0, 50, "updatedTime", "DESC"))))
+                .thenReturn(List.of(g1, g2));
         // for testing purposes
         Instant test = Instant.parse("2026-04-18T02:00:00Z");
         mockMvc.perform(get("/games")
@@ -73,8 +81,62 @@ public class GamesControllerTest {
                 .andExpect(jsonPath("$[1].awayScore").value(105))
                 .andExpect(jsonPath("$[1].status").value("FINAL"))
                 .andExpect(jsonPath("$[1].schedTime").value(test.toString()));
-        verify(gamesService).getAllGames(null);
+        verify(gamesService).getAllGames(
+                org.mockito.ArgumentMatchers.isNull(),
+                argThat(pageable -> hasPage(pageable, 0, 50, "updatedTime", "DESC")));
 
+    }
+
+    @Test
+    public void getAllGamesBoundsLimitTest() throws Exception
+    {
+        when(gamesService.getAllGames(
+                org.mockito.ArgumentMatchers.eq(Games.Status.LIVE),
+                argThat(pageable -> hasPage(pageable, 0, 100, "updatedTime", "DESC"))))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/games")
+                .param("status", "LIVE")
+                .param("size", "500")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        verify(gamesService).getAllGames(
+                org.mockito.ArgumentMatchers.eq(Games.Status.LIVE),
+                argThat(pageable -> hasPage(pageable, 0, 100, "updatedTime", "DESC")));
+    }
+
+    @Test
+    public void getAllGamesUsesRequestedPageTest() throws Exception
+    {
+        when(gamesService.getAllGames(
+                org.mockito.ArgumentMatchers.isNull(),
+                argThat(pageable -> hasPage(pageable, 3, 25, "schedTime", "ASC"))))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/games")
+                .param("size", "25")
+                .param("page", "3")
+                .param("sort", "schedTime,asc")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        verify(gamesService).getAllGames(
+                org.mockito.ArgumentMatchers.isNull(),
+                argThat(pageable -> hasPage(pageable, 3, 25, "schedTime", "ASC")));
+    }
+
+    private static boolean hasPage(
+            Pageable pageable,
+            int page,
+            int size,
+            String sortProperty,
+            String direction) {
+        return pageable != null
+                && pageable.getPageNumber() == page
+                && pageable.getPageSize() == size
+                && pageable.getSort().getOrderFor(sortProperty) != null
+                && pageable.getSort().getOrderFor(sortProperty).getDirection().name().equals(direction);
     }
     @Test
     public void getGamesByIdTest() throws Exception

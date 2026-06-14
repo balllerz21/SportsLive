@@ -9,6 +9,9 @@ import org.example.sportslivev1.dto.GameResponse;
 import org.example.sportslivev1.dto.GameDetailResponse;
 import org.example.sportslivev1.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,9 +27,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 public class GamesController {
     @Autowired
     GamesServiceImp serviceGame;
+
     @GetMapping
-    public List<GameResponse> getAllGames(@RequestParam(required = false) Games.Status status) {
-        List<Games> games = serviceGame.getAllGames(status);
+    public List<GameResponse> getAllGames(@RequestParam(required = false) Games.Status status, @PageableDefault(size = 50, sort = "updatedTime", direction = Sort.Direction.DESC) Pageable pageable) {
+        List<Games> games = serviceGame.getAllGames(status, pageable);
         return games.stream().map(GameMapper::toResponse).toList();
     }
 

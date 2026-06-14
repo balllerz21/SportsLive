@@ -10,6 +10,9 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import org.example.sportslivev1.entity.Games;
@@ -122,13 +125,23 @@ public class GamesServiceTest {
             Instant.parse("2026-04-17T23:30:00Z")
         );
 
-        when(gamesRepo.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(game1, game2));
+        when(gamesRepo.findAll(any(Specification.class), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(game1, game2)));
 
-        List<Games> result = gamesService.getAllGames(null);
+        Pageable requestedPage = PageRequest.of(
+            2,
+            50,
+            Sort.by(Sort.Direction.DESC, "updatedTime")
+        );
+        List<Games> result = gamesService.getAllGames(null, requestedPage);
 
         assertEquals(2, result.size());
         assertEquals(game1, result.get(0));
         assertEquals(game2, result.get(1));
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(gamesRepo).findAll(any(Specification.class), pageableCaptor.capture());
+        assertEquals(requestedPage, pageableCaptor.getValue());
     }
 
     @Test
