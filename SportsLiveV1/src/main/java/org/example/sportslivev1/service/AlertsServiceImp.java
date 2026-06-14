@@ -9,6 +9,9 @@ import org.example.sportslivev1.repository.UsersRepo;
 import org.example.sportslivev1.specifications.AlertsSpecifications;
 import org.example.sportslivev1.utils.Utilities;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -66,15 +69,22 @@ public class AlertsServiceImp implements AlertsService {
     }
 
     @Override
-    public List<Alerts> getAllAlerts(Alerts.AlertStatus status, Alerts.AlertType type, String team, String timeframe) {
+    public Page<Alerts> getAllAlerts(Alerts.AlertStatus status, Alerts.AlertType type, String team, String timeframe, String username, Pageable pageable) {
         // adding custom order by 
         String customOrderSql = "CASE status " +
                         "  WHEN 'TRIGGERED' THEN 1 " +
                         "  WHEN 'CREATED' THEN 2 " +
                         "  WHEN 'FINISHED' THEN 3 " +
                         "  ELSE 4 END";
-        Sort customSort = JpaSort.unsafe(Sort.Direction.ASC, customOrderSql);
+        Sort customSort = JpaSort.unsafe(Sort.Direction.ASC, customOrderSql)
+            .and(Sort.by(Sort.Direction.DESC, "id"));
+        Pageable serverPageable = PageRequest.of(
+            pageable.getPageNumber(),
+            pageable.getPageSize(),
+            customSort
+        );
         Specification<Alerts> spec = Specification.unrestricted();
+        spec = spec.and(AlertsSpecifications.belongsToUser(username));
         if (status != null){
             spec = spec.and(AlertsSpecifications.hasStatus(status));
         }
@@ -94,7 +104,7 @@ public class AlertsServiceImp implements AlertsService {
                 throw new IllegalArgumentException("Invalid timeframe format. Use formats like 'daily', 'weekly', 'monthly', or 'yearly'.");
             }
         }
-        return (List<Alerts>) alertsRepo.findAll(spec, customSort);
+        return alertsRepo.findAll(spec, serverPageable);
     }   
     @Override
     public Alerts getAlertById(Long id) {

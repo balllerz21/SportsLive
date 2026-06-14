@@ -2,6 +2,7 @@ package org.example.sportslivev1.controllerTests;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,6 +17,7 @@ import java.util.List;
 
 import org.example.sportslivev1.auth.AuthEntryPointJwt;
 import org.example.sportslivev1.auth.AuthTokenFilter;
+import org.example.sportslivev1.config.PageableConfig;
 import org.example.sportslivev1.controller.AlertsController;
 import org.example.sportslivev1.dto.AlertsRequest;
 import org.example.sportslivev1.entity.Alerts;
@@ -30,16 +32,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(AlertsController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(PageableConfig.class)
 public class AlertsControllerTest {
         @Autowired
         private MockMvc mockMvc;
@@ -180,21 +186,23 @@ public class AlertsControllerTest {
                 a2.setId(2L);
                 a2.setUser(user("testuser", 1L));
 
-                when(alertsService.getAllAlerts(null, null, null, null)).thenReturn(List.of(a1, a2));
+                when(alertsService.getAllAlerts(isNull(), isNull(), isNull(), isNull(), eq("testuser"), any(Pageable.class)))
+                        .thenReturn(new PageImpl<>(List.of(a1, a2)));
                 mockMvc.perform(get("/alerts")
                         .principal(principal("testuser"))
                         .accept(MediaType.APPLICATION_JSON))
                         .andExpect(status().isOk())
-                        .andExpect(jsonPath("$[0].id").value(1))
-                        .andExpect(jsonPath("$[0].teamName").value("Golden State Warriors"))
-                        .andExpect(jsonPath("$[0].alertType").value("SCORE_OVER"))
-                        .andExpect(jsonPath("$[0].targetVal").value(120))
-                        .andExpect(jsonPath("$[1].id").value(2))
-                        .andExpect(jsonPath("$[1].teamName").value("Phoenix Suns"))
-                        .andExpect(jsonPath("$[1].alertType").value("SCORE_UNDER"))
-                        .andExpect(jsonPath("$[1].targetVal").value(105));
+                        .andExpect(jsonPath("$.content[0].id").value(1))
+                        .andExpect(jsonPath("$.content[0].teamName").value("Golden State Warriors"))
+                        .andExpect(jsonPath("$.content[0].alertType").value("SCORE_OVER"))
+                        .andExpect(jsonPath("$.content[0].targetVal").value(120))
+                        .andExpect(jsonPath("$.content[1].id").value(2))
+                        .andExpect(jsonPath("$.content[1].teamName").value("Phoenix Suns"))
+                        .andExpect(jsonPath("$.content[1].alertType").value("SCORE_UNDER"))
+                        .andExpect(jsonPath("$.content[1].targetVal").value(105))
+                        .andExpect(jsonPath("$.page.totalElements").value(2));
 
-                verify(alertsService).getAllAlerts(null, null, null, null);
+                verify(alertsService).getAllAlerts(isNull(), isNull(), isNull(), isNull(), eq("testuser"), any(Pageable.class));
         }
 
         @Test
@@ -221,17 +229,18 @@ public class AlertsControllerTest {
                 otherAlert.setId(2L);
                 otherAlert.setUser(otherUser);
 
-                when(alertsService.getAllAlerts(Alerts.AlertStatus.CREATED, null, null, null)).thenReturn(List.of(userAlert, otherAlert));
+                when(alertsService.getAllAlerts(eq(Alerts.AlertStatus.CREATED), isNull(), isNull(), isNull(), eq("testuser"), any(Pageable.class)))
+                        .thenReturn(new PageImpl<>(List.of(userAlert)));
 
                 mockMvc.perform(get("/alerts?status=CREATED")
                         .principal(new UsernamePasswordAuthenticationToken("testuser", null))
                         .accept(MediaType.APPLICATION_JSON))
                         .andExpect(status().isOk())
-                        .andExpect(jsonPath("$.length()").value(1))
-                        .andExpect(jsonPath("$[0].id").value(1))
-                        .andExpect(jsonPath("$[0].teamName").value("Golden State Warriors"));
+                        .andExpect(jsonPath("$.content.length()").value(1))
+                        .andExpect(jsonPath("$.content[0].id").value(1))
+                        .andExpect(jsonPath("$.content[0].teamName").value("Golden State Warriors"));
 
-                verify(alertsService).getAllAlerts(Alerts.AlertStatus.CREATED, null, null, null);
+                verify(alertsService).getAllAlerts(eq(Alerts.AlertStatus.CREATED), isNull(), isNull(), isNull(), eq("testuser"), any(Pageable.class));
         }
 
         @Test
@@ -255,17 +264,18 @@ public class AlertsControllerTest {
         Alerts a2 = new Alerts(game, "Phoenix Suns", Alerts.AlertType.SCORE_UNDER, 105);
         a2.setId(2L);
 
-        when(alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, null, null,  null)).thenReturn(List.of(a1));
+        when(alertsService.getAllAlerts(eq(Alerts.AlertStatus.TRIGGERED), isNull(), isNull(), isNull(), eq("testuser"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(a1)));
         mockMvc.perform(get("/alerts?status=TRIGGERED")
                 .principal(principal("testuser"))
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].teamName").value("Golden State Warriors"))
-                .andExpect(jsonPath("$[0].alertType").value("SCORE_OVER"))
-                .andExpect(jsonPath("$[0].targetVal").value(120));
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].teamName").value("Golden State Warriors"))
+                .andExpect(jsonPath("$.content[0].alertType").value("SCORE_OVER"))
+                .andExpect(jsonPath("$.content[0].targetVal").value(120));
 
-        verify(alertsService).getAllAlerts(Alerts.AlertStatus.TRIGGERED, null, null, null);
+        verify(alertsService).getAllAlerts(eq(Alerts.AlertStatus.TRIGGERED), isNull(), isNull(), isNull(), eq("testuser"), any(Pageable.class));
         }
 
         @Test
@@ -287,17 +297,18 @@ public class AlertsControllerTest {
                 a1.setAlertStatus(Alerts.AlertStatus.TRIGGERED);
                 a1.setUser(user("testuser", 1L));
 
-                when(alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, null, null)).thenReturn(List.of(a1));
+                when(alertsService.getAllAlerts(eq(Alerts.AlertStatus.TRIGGERED), eq(Alerts.AlertType.SCORE_OVER), isNull(), isNull(), eq("testuser"), any(Pageable.class)))
+                        .thenReturn(new PageImpl<>(List.of(a1)));
                 mockMvc.perform(get("/alerts?status=TRIGGERED&alertType=SCORE_OVER")
                         .principal(principal("testuser"))
                         .accept(MediaType.APPLICATION_JSON))
                         .andExpect(status().isOk())
-                        .andExpect(jsonPath("$[0].id").value(1))
-                        .andExpect(jsonPath("$[0].teamName").value("Golden State Warriors"))
-                        .andExpect(jsonPath("$[0].alertType").value("SCORE_OVER"))
-                        .andExpect(jsonPath("$[0].targetVal").value(120));
+                        .andExpect(jsonPath("$.content[0].id").value(1))
+                        .andExpect(jsonPath("$.content[0].teamName").value("Golden State Warriors"))
+                        .andExpect(jsonPath("$.content[0].alertType").value("SCORE_OVER"))
+                        .andExpect(jsonPath("$.content[0].targetVal").value(120));
 
-                verify(alertsService).getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, null, null);
+                verify(alertsService).getAllAlerts(eq(Alerts.AlertStatus.TRIGGERED), eq(Alerts.AlertType.SCORE_OVER), isNull(), isNull(), eq("testuser"), any(Pageable.class));
         }
         @Test
         void getAllAlertsTest4() throws Exception
@@ -318,17 +329,18 @@ public class AlertsControllerTest {
                 a1.setAlertStatus(Alerts.AlertStatus.TRIGGERED);
                 a1.setUser(user("testuser", 1L));
 
-                when(alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors", null)).thenReturn(List.of(a1));
+                when(alertsService.getAllAlerts(eq(Alerts.AlertStatus.TRIGGERED), eq(Alerts.AlertType.SCORE_OVER), eq("Golden State Warriors"), isNull(), eq("testuser"), any(Pageable.class)))
+                        .thenReturn(new PageImpl<>(List.of(a1)));
                 mockMvc.perform(get("/alerts?status=TRIGGERED&alertType=SCORE_OVER&teamName=Golden State Warriors")
                         .principal(principal("testuser"))
                         .accept(MediaType.APPLICATION_JSON))
                         .andExpect(status().isOk())
-                        .andExpect(jsonPath("$[0].id").value(1))
-                        .andExpect(jsonPath("$[0].teamName").value("Golden State Warriors"))
-                        .andExpect(jsonPath("$[0].alertType").value("SCORE_OVER"))
-                        .andExpect(jsonPath("$[0].targetVal").value(120));
+                        .andExpect(jsonPath("$.content[0].id").value(1))
+                        .andExpect(jsonPath("$.content[0].teamName").value("Golden State Warriors"))
+                        .andExpect(jsonPath("$.content[0].alertType").value("SCORE_OVER"))
+                        .andExpect(jsonPath("$.content[0].targetVal").value(120));
 
-                verify(alertsService).getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors",  null);
+                verify(alertsService).getAllAlerts(eq(Alerts.AlertStatus.TRIGGERED), eq(Alerts.AlertType.SCORE_OVER), eq("Golden State Warriors"), isNull(), eq("testuser"), any(Pageable.class));
         }
         @Test
         void getAllAlertsTest5() throws Exception
@@ -350,17 +362,18 @@ public class AlertsControllerTest {
                 a1.setCreatedAt(Instant.parse("2026-04-18T02:00:00Z"));
                 a1.setUser(user("testuser", 1L));
 
-                when(alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors", "weekly")).thenReturn(List.of(a1));
+                when(alertsService.getAllAlerts(eq(Alerts.AlertStatus.TRIGGERED), eq(Alerts.AlertType.SCORE_OVER), eq("Golden State Warriors"), eq("weekly"), eq("testuser"), any(Pageable.class)))
+                        .thenReturn(new PageImpl<>(List.of(a1)));
                 mockMvc.perform(get("/alerts?status=TRIGGERED&alertType=SCORE_OVER&teamName=Golden State Warriors&period=weekly")
                         .principal(principal("testuser"))
                         .accept(MediaType.APPLICATION_JSON))
                         .andExpect(status().isOk())
-                        .andExpect(jsonPath("$[0].id").value(1))
-                        .andExpect(jsonPath("$[0].teamName").value("Golden State Warriors"))
-                        .andExpect(jsonPath("$[0].alertType").value("SCORE_OVER"))
-                        .andExpect(jsonPath("$[0].targetVal").value(120));
+                        .andExpect(jsonPath("$.content[0].id").value(1))
+                        .andExpect(jsonPath("$.content[0].teamName").value("Golden State Warriors"))
+                        .andExpect(jsonPath("$.content[0].alertType").value("SCORE_OVER"))
+                        .andExpect(jsonPath("$.content[0].targetVal").value(120));
 
-                verify(alertsService).getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors",  "weekly");
+                verify(alertsService).getAllAlerts(eq(Alerts.AlertStatus.TRIGGERED), eq(Alerts.AlertType.SCORE_OVER), eq("Golden State Warriors"), eq("weekly"), eq("testuser"), any(Pageable.class));
         }
         @Test
         void getAllAlertsTestErrorInvalidTimeframeParam() throws Exception
@@ -381,12 +394,13 @@ public class AlertsControllerTest {
                 a1.setAlertStatus(Alerts.AlertStatus.TRIGGERED);
                 a1.setCreatedAt(Instant.parse("2026-04-18T02:00:00Z"));
 
-                when(alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors", "hello")).thenThrow(new IllegalArgumentException("Invalid timeframe format. Use formats like 'daily', 'weekly', 'monthly', or 'yearly'."));
+                when(alertsService.getAllAlerts(eq(Alerts.AlertStatus.TRIGGERED), eq(Alerts.AlertType.SCORE_OVER), eq("Golden State Warriors"), eq("hello"), eq("testuser"), any(Pageable.class)))
+                        .thenThrow(new IllegalArgumentException("Invalid timeframe format. Use formats like 'daily', 'weekly', 'monthly', or 'yearly'."));
                 mockMvc.perform(get("/alerts?status=TRIGGERED&alertType=SCORE_OVER&teamName=Golden State Warriors&period=hello")
                         .principal(principal("testuser"))
                         .accept(MediaType.APPLICATION_JSON))
                         .andExpect(status().isBadRequest());
-                verify(alertsService).getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Golden State Warriors", "hello");
+                verify(alertsService).getAllAlerts(eq(Alerts.AlertStatus.TRIGGERED), eq(Alerts.AlertType.SCORE_OVER), eq("Golden State Warriors"), eq("hello"), eq("testuser"), any(Pageable.class));
         }
         @Test
         void deleteAlertTest() throws Exception {

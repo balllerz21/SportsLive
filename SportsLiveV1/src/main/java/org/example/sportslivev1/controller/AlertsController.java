@@ -11,6 +11,9 @@ import org.example.sportslivev1.entity.Alerts.AlertStatus;
 import org.example.sportslivev1.entity.Alerts.AlertType;
 import org.example.sportslivev1.entity.Users;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -68,19 +71,16 @@ public class AlertsController {
     }
     
     @GetMapping
-    public ResponseEntity<List<AlertResponse>> getAllAlerts(@RequestParam(required = false) String teamName, @RequestParam(required = false) AlertType alertType, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) String period, Principal principal) {
+    public ResponseEntity<Page<AlertResponse>> getAllAlerts(@RequestParam(required = false) String teamName, @RequestParam(required = false) AlertType alertType, @RequestParam(required = false) AlertStatus status, @RequestParam(required = false) String period, @PageableDefault(size = 50) Pageable pageable, Principal principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
 
         try {
-            List<Alerts> alerts;
-            alerts = service.getAllAlerts(status, alertType, teamName, period);
-            alerts = alerts.stream()
-                .filter(alert -> alert.getUser() != null)
-                .filter(alert -> principal.getName().equals(alert.getUser().getUserName()))
-                .toList();
-            return ResponseEntity.ok(alerts.stream().map(AlertMapper::toResponse).toList());
+            Page<AlertResponse> alerts = service
+                .getAllAlerts(status, alertType, teamName, period, principal.getName(), pageable)
+                .map(AlertMapper::toResponse);
+            return ResponseEntity.ok(alerts);
         }
         catch (Exception e)
         {

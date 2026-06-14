@@ -78,11 +78,11 @@ public class AlertsIntregationTests {
         .accept(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$[*].id").exists())
-        .andExpect(jsonPath("$[*].teamName").exists())
-        .andExpect(jsonPath("$[*].alertType").exists())
-        .andExpect(jsonPath("$[*].status").exists());;
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content[*].id").exists())
+        .andExpect(jsonPath("$.content[*].teamName").exists())
+        .andExpect(jsonPath("$.content[*].alertType").exists())
+        .andExpect(jsonPath("$.content[*].status").exists());
     }
     @Test
     public void getAllAlertsWithParams() throws Exception
@@ -91,12 +91,12 @@ public class AlertsIntregationTests {
         .param("teamName", "Charlotte Hornets")
         .principal(new UsernamePasswordAuthenticationToken(user, null))
         .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
-        .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$[*].id").exists())
-        .andExpect(jsonPath("$[*].teamName").exists())
-        .andExpect(jsonPath("$[*].alertType").exists())
-        .andExpect(jsonPath("$[*].status").exists())
-        .andExpect(jsonPath("$[*].teamName").value(everyItem(Matchers.containsString("Charlotte Hornets"))));
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content[*].id").exists())
+        .andExpect(jsonPath("$.content[*].teamName").exists())
+        .andExpect(jsonPath("$.content[*].alertType").exists())
+        .andExpect(jsonPath("$.content[*].status").exists())
+        .andExpect(jsonPath("$.content[*].teamName").value(everyItem(Matchers.containsString("Charlotte Hornets"))));
     }
     @Test
     public void getAllAlertsWithParamsTest2() throws Exception
@@ -106,12 +106,12 @@ public class AlertsIntregationTests {
         .principal(new UsernamePasswordAuthenticationToken(user, null))
         .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$[*].id").exists())
-        .andExpect(jsonPath("$[*].teamName").exists())
-        .andExpect(jsonPath("$[*].alertType").exists())
-        .andExpect(jsonPath("$[*].status").exists())
-        .andExpect(jsonPath("$[*].status").value(everyItem(Matchers.containsString("FINISHED"))));
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content[*].id").exists())
+        .andExpect(jsonPath("$.content[*].teamName").exists())
+        .andExpect(jsonPath("$.content[*].alertType").exists())
+        .andExpect(jsonPath("$.content[*].status").exists())
+        .andExpect(jsonPath("$.content[*].status").value(everyItem(Matchers.containsString("FINISHED"))));
     }
     @Test
     public void getAllAlertsWithParamsTest3() throws Exception
@@ -121,12 +121,12 @@ public class AlertsIntregationTests {
         .principal(new UsernamePasswordAuthenticationToken(user, null))
         .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$[*].id").exists())
-        .andExpect(jsonPath("$[*].teamName").exists())
-        .andExpect(jsonPath("$[*].alertType").exists())
-        .andExpect(jsonPath("$[*].status").exists())
-        .andExpect(jsonPath("$[*].alertType").value(everyItem(Matchers.containsString("SCORE_OVER"))));
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content[*].id").exists())
+        .andExpect(jsonPath("$.content[*].teamName").exists())
+        .andExpect(jsonPath("$.content[*].alertType").exists())
+        .andExpect(jsonPath("$.content[*].status").exists())
+        .andExpect(jsonPath("$.content[*].alertType").value(everyItem(Matchers.containsString("SCORE_OVER"))));
     }
     @Test
     public void getAlertByIdExists() throws Exception

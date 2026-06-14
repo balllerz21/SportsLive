@@ -4,9 +4,11 @@ import org.example.sportslivev1.entity.Games;
 import org.example.sportslivev1.entity.Users;
 import java.time.Instant;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 public interface AlertsService {
     Alerts createAlert(Games game, Users user, String teamName, Alerts.AlertType alertType, int targetValt);
-    List<Alerts> getAllAlerts(Alerts.AlertStatus status, Alerts.AlertType type, String team, String date);
+    Page<Alerts> getAllAlerts(Alerts.AlertStatus status, Alerts.AlertType type, String team, String date, String username, Pageable pageable);
     Alerts getAlertById(Long id);
     List<Alerts> getAlertsByTeamName(String teamName);
     List<Alerts> getAlertsByAlertType(Alerts.AlertType alertType);

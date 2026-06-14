@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -59,28 +60,29 @@ public class GamesControllerTest {
         when(gamesService.getAllGames(
                 org.mockito.ArgumentMatchers.isNull(),
                 argThat(pageable -> hasPage(pageable, 0, 50, "updatedTime", "DESC"))))
-                .thenReturn(List.of(g1, g2));
+                .thenReturn(new PageImpl<>(List.of(g1, g2)));
         // for testing purposes
         Instant test = Instant.parse("2026-04-18T02:00:00Z");
         mockMvc.perform(get("/games")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].actualGameId").value("401866757"))
-                .andExpect(jsonPath("$[0].homeTeam").value("Philadelphia 76ers"))
-                .andExpect(jsonPath("$[0].homeScore").value(109))
-                .andExpect(jsonPath("$[0].awayTeam").value("Orlando Magic"))
-                .andExpect(jsonPath("$[0].awayScore").value(97))
-                .andExpect(jsonPath("$[0].status").value("FINAL"))
-                .andExpect(jsonPath("$[0].schedTime").value(test.toString()))
-                .andExpect(jsonPath("$[1].id").value(2L))
-                .andExpect(jsonPath("$[1].actualGameId").value("401869188"))
-                .andExpect(jsonPath("$[1].homeTeam").value("Denver Nuggets"))
-                .andExpect(jsonPath("$[1].homeScore").value(116))
-                .andExpect(jsonPath("$[1].awayTeam").value("Minnesota Timberwolves"))
-                .andExpect(jsonPath("$[1].awayScore").value(105))
-                .andExpect(jsonPath("$[1].status").value("FINAL"))
-                .andExpect(jsonPath("$[1].schedTime").value(test.toString()));
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].actualGameId").value("401866757"))
+                .andExpect(jsonPath("$.content[0].homeTeam").value("Philadelphia 76ers"))
+                .andExpect(jsonPath("$.content[0].homeScore").value(109))
+                .andExpect(jsonPath("$.content[0].awayTeam").value("Orlando Magic"))
+                .andExpect(jsonPath("$.content[0].awayScore").value(97))
+                .andExpect(jsonPath("$.content[0].status").value("FINAL"))
+                .andExpect(jsonPath("$.content[0].schedTime").value(test.toString()))
+                .andExpect(jsonPath("$.content[1].id").value(2L))
+                .andExpect(jsonPath("$.content[1].actualGameId").value("401869188"))
+                .andExpect(jsonPath("$.content[1].homeTeam").value("Denver Nuggets"))
+                .andExpect(jsonPath("$.content[1].homeScore").value(116))
+                .andExpect(jsonPath("$.content[1].awayTeam").value("Minnesota Timberwolves"))
+                .andExpect(jsonPath("$.content[1].awayScore").value(105))
+                .andExpect(jsonPath("$.content[1].status").value("FINAL"))
+                .andExpect(jsonPath("$.content[1].schedTime").value(test.toString()))
+                .andExpect(jsonPath("$.page.totalElements").value(2));
         verify(gamesService).getAllGames(
                 org.mockito.ArgumentMatchers.isNull(),
                 argThat(pageable -> hasPage(pageable, 0, 50, "updatedTime", "DESC")));
@@ -93,7 +95,7 @@ public class GamesControllerTest {
         when(gamesService.getAllGames(
                 org.mockito.ArgumentMatchers.eq(Games.Status.LIVE),
                 argThat(pageable -> hasPage(pageable, 0, 100, "updatedTime", "DESC"))))
-                .thenReturn(List.of());
+                .thenReturn(new PageImpl<>(List.of()));
 
         mockMvc.perform(get("/games")
                 .param("status", "LIVE")
@@ -112,7 +114,7 @@ public class GamesControllerTest {
         when(gamesService.getAllGames(
                 org.mockito.ArgumentMatchers.isNull(),
                 argThat(pageable -> hasPage(pageable, 3, 25, "schedTime", "ASC"))))
-                .thenReturn(List.of());
+                .thenReturn(new PageImpl<>(List.of()));
 
         mockMvc.perform(get("/games")
                 .param("size", "25")

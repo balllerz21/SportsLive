@@ -21,6 +21,10 @@ public class AlertsSpecifications {
     public static Specification<Alerts> hasType(Alerts.AlertType type) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("alertType"), type);
     }
+    public static Specification<Alerts> belongsToUser(String username) {
+        return (root, query, criteriaBuilder) ->
+            criteriaBuilder.equal(root.join("user").get("userName"), username);
+    }
     // user can search by created date
     public static Specification<Alerts> hasDate(Instant date)
     {

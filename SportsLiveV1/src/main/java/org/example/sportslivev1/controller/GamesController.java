@@ -2,13 +2,12 @@ package org.example.sportslivev1.controller;
 
 import org.example.sportslivev1.service.GamesServiceImp;
 
-import java.util.List;
-
 import org.example.sportslivev1.dto.GameMapper;
 import org.example.sportslivev1.dto.GameResponse;
 import org.example.sportslivev1.dto.GameDetailResponse;
 import org.example.sportslivev1.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -29,9 +28,9 @@ public class GamesController {
     GamesServiceImp serviceGame;
 
     @GetMapping
-    public List<GameResponse> getAllGames(@RequestParam(required = false) Games.Status status, @PageableDefault(size = 50, sort = "updatedTime", direction = Sort.Direction.DESC) Pageable pageable) {
-        List<Games> games = serviceGame.getAllGames(status, pageable);
-        return games.stream().map(GameMapper::toResponse).toList();
+    public ResponseEntity<Page<GameResponse>> getAllGames(@RequestParam(required = false) Games.Status status, @PageableDefault(size = 50, sort = "updatedTime", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<GameResponse> games = serviceGame.getAllGames(status, pageable).map(GameMapper::toResponse);
+        return ResponseEntity.ok(games);
     }
 
     @GetMapping("/{id}")

@@ -34,7 +34,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -147,12 +150,14 @@ public class AlertsServiceTest {
     {
         Alerts a1 = buildAlerts();
         Alerts a2 = new Alerts(a1.getGame(), "Golden State Warriors", Alerts.AlertType.SCORE_OVER, 100);
-        when(alertsRepo.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(a1, a2));
-        List<Alerts> listAlerts = alertsService.getAllAlerts(null, null, null, null);
+        when(alertsRepo.findAll(any(Specification.class), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(a1, a2)));
+        Page<Alerts> listAlerts = alertsService.getAllAlerts(
+            null, null, null, null, "testuser", PageRequest.of(0, 50));
 
-        assertEquals(2, listAlerts.size());
-        assertEquals(a1, listAlerts.get(0));
-        assertEquals(a2, listAlerts.get(1));
+        assertEquals(2, listAlerts.getNumberOfElements());
+        assertEquals(a1, listAlerts.getContent().get(0));
+        assertEquals(a2, listAlerts.getContent().get(1));
     }
     @Test
     public void getAlertsSpecificationsTest2()
@@ -162,36 +167,42 @@ public class AlertsServiceTest {
         Alerts a2 = new Alerts(a1.getGame(), "Golden State Warriors", Alerts.AlertType.SCORE_UNDER, 100);
         a2.setAlertStatus(Alerts.AlertStatus.TRIGGERED);
 
-        when(alertsRepo.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(a1, a2)).thenReturn(List.of(a1, a2)).thenReturn(List.of(a2)).thenReturn(List.of(a1));
+        when(alertsRepo.findAll(any(Specification.class), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(a1, a2)))
+            .thenReturn(new PageImpl<>(List.of(a1, a2)))
+            .thenReturn(new PageImpl<>(List.of(a2)))
+            .thenReturn(new PageImpl<>(List.of(a1)))
+            .thenReturn(new PageImpl<>(List.of(a1)));
+        Pageable pageable = PageRequest.of(0, 50);
 
         // testing date query
-        List<Alerts> listAlertsDate = alertsService.getAllAlerts(null, null, null, "weekly");
-        assertEquals(2, listAlertsDate.size());
-        assertEquals(a1, listAlertsDate.get(0));
-        assertEquals(a2, listAlertsDate.get(1));
+        Page<Alerts> listAlertsDate = alertsService.getAllAlerts(null, null, null, "weekly", "testuser", pageable);
+        assertEquals(2, listAlertsDate.getNumberOfElements());
+        assertEquals(a1, listAlertsDate.getContent().get(0));
+        assertEquals(a2, listAlertsDate.getContent().get(1));
         // testing status query 
-        List<Alerts> listAlertsStatus = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, null, null, null);
-        assertEquals(2, listAlertsStatus.size());
-        assertEquals(a1, listAlertsStatus.get(0));
-        assertEquals(a2, listAlertsStatus.get(1));
+        Page<Alerts> listAlertsStatus = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, null, null, null, "testuser", pageable);
+        assertEquals(2, listAlertsStatus.getNumberOfElements());
+        assertEquals(a1, listAlertsStatus.getContent().get(0));
+        assertEquals(a2, listAlertsStatus.getContent().get(1));
         // testing status + type query
-        List<Alerts> listAlertsUnder = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_UNDER, null, null);
-        assertEquals(1, listAlertsUnder.size());
-        assertEquals(a2, listAlertsUnder.get(0));
-        List<Alerts> listAlertsOver = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, null, null);
-        assertEquals(1, listAlertsOver.size());
-        assertEquals(a1, listAlertsOver.get(0));        
+        Page<Alerts> listAlertsUnder = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_UNDER, null, null, "testuser", pageable);
+        assertEquals(1, listAlertsUnder.getNumberOfElements());
+        assertEquals(a2, listAlertsUnder.getContent().get(0));
+        Page<Alerts> listAlertsOver = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, null, null, "testuser", pageable);
+        assertEquals(1, listAlertsOver.getNumberOfElements());
+        assertEquals(a1, listAlertsOver.getContent().get(0));
         // testing status + type + team query
-        List<Alerts> listsAlertsMix = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Phoenix Suns", null);
-        assertEquals(1, listsAlertsMix.size());
-        assertEquals(a1, listsAlertsMix.get(0));
+        Page<Alerts> listsAlertsMix = alertsService.getAllAlerts(Alerts.AlertStatus.TRIGGERED, Alerts.AlertType.SCORE_OVER, "Phoenix Suns", null, "testuser", pageable);
+        assertEquals(1, listsAlertsMix.getNumberOfElements());
+        assertEquals(a1, listsAlertsMix.getContent().get(0));
     }
     @Test
     public void getAlertsSpecificationsTest3() {
         MockedStatic<Utilities> utilitiesMock = mockStatic(Utilities.class);
         utilitiesMock.when(() -> Utilities.convertToInstant("hello")).thenThrow(new IllegalArgumentException("Invalid date format. Please provide a valid timeframe keyword."));
         Throwable exception = assertThrows(IllegalArgumentException.class, () -> {
-            alertsService.getAllAlerts(null, null, null, "hello");
+            alertsService.getAllAlerts(null, null, null, "hello", "testuser", PageRequest.of(0, 50));
         });
         assertEquals("Invalid timeframe format. Use formats like 'daily', 'weekly', 'monthly', or 'yearly'.", exception.getMessage());
     }

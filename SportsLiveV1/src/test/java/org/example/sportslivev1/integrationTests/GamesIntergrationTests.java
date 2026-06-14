@@ -53,26 +53,26 @@ public class GamesIntergrationTests {
     {
         this.mockMvc.perform(get("/games").accept(MediaType.APPLICATION_JSON)).andDo(print())
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$[*].id").exists())
-        .andExpect(jsonPath("$[*].actualGameId").exists())
-        .andExpect(jsonPath("$[*].homeTeam").exists())
-        .andExpect(jsonPath("$[*].awayTeam").exists())
-        .andExpect(jsonPath("$[*].homeScore").exists())
-        .andExpect(jsonPath("[*].status").exists());
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content[*].id").exists())
+        .andExpect(jsonPath("$.content[*].actualGameId").exists())
+        .andExpect(jsonPath("$.content[*].homeTeam").exists())
+        .andExpect(jsonPath("$.content[*].awayTeam").exists())
+        .andExpect(jsonPath("$.content[*].homeScore").exists())
+        .andExpect(jsonPath("$.content[*].status").exists());
     }
     @Test void getAllGamesWStatusParam() throws Exception
     {
         this.mockMvc.perform(get("/games").param("status", "FINAL").accept(MediaType.APPLICATION_JSON))
         .andDo(print()).andExpect(status().isOk())
-        .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$[*].id").exists())
-        .andExpect(jsonPath("$[*].actualGameId").exists())
-        .andExpect(jsonPath("$[*].homeTeam").exists())
-        .andExpect(jsonPath("$[*].awayTeam").exists())
-        .andExpect(jsonPath("$[*].homeScore").exists())
-        .andExpect(jsonPath("[*].status").exists())
-        .andExpect(jsonPath("[*].status").value(everyItem(Matchers.containsString("FINAL"))));
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content[*].id").exists())
+        .andExpect(jsonPath("$.content[*].actualGameId").exists())
+        .andExpect(jsonPath("$.content[*].homeTeam").exists())
+        .andExpect(jsonPath("$.content[*].awayTeam").exists())
+        .andExpect(jsonPath("$.content[*].homeScore").exists())
+        .andExpect(jsonPath("$.content[*].status").exists())
+        .andExpect(jsonPath("$.content[*].status").value(everyItem(Matchers.containsString("FINAL"))));
     }
     // this tests when games are live since this is more based on actual times where the games are actual live it will fail if no game is registered as live
     // @Test void getAllGamesWStatusParamTest2() throws Exception

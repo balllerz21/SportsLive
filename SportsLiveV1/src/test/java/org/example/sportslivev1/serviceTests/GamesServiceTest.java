@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -133,11 +134,11 @@ public class GamesServiceTest {
             50,
             Sort.by(Sort.Direction.DESC, "updatedTime")
         );
-        List<Games> result = gamesService.getAllGames(null, requestedPage);
+        Page<Games> result = gamesService.getAllGames(null, requestedPage);
 
-        assertEquals(2, result.size());
-        assertEquals(game1, result.get(0));
-        assertEquals(game2, result.get(1));
+        assertEquals(2, result.getNumberOfElements());
+        assertEquals(game1, result.getContent().get(0));
+        assertEquals(game2, result.getContent().get(1));
 
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         verify(gamesRepo).findAll(any(Specification.class), pageableCaptor.capture());
