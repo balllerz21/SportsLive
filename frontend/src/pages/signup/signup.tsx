@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaEye } from "react-icons/fa6";
 import { FaEyeSlash } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
-import { apiFetch, getResponseErrorMessage, loginUser } from "../../api/utils";
+import { apiFetch, getResponseErrorMessage, loginUser, warmBackend } from "../../api/utils";
 
 const SignUpPage: React.FC = () => {
     const [username, setUsername] = useState('');
@@ -10,6 +10,9 @@ const SignUpPage: React.FC = () => {
     const [ showPassword, setShowPassword ] = useState(false);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        warmBackend();
+    }, []);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();

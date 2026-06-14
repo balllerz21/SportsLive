@@ -436,6 +436,11 @@ code {
   margin-top: 20px;
 }
 
+.games-updating {
+  margin-top: 14px;
+  text-align: center;
+}
+
 .games-pagination button {
   border: 1px solid var(--border);
   border-radius: 6px;

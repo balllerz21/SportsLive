@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiFetch, formatUserDateTime, getResponseErrorMessage } from "../../api/utils";
+import { apiFetch, formatUserDateTime, getResponseErrorMessage, prefetchApi } from "../../api/utils";
 
 type GameStatus = "SCHEDULED" | "LIVE" | "FINAL";
 
@@ -65,6 +65,7 @@ function DashboardPage() {
     async function loadDashboard() {
       try {
         await refreshDashboard();
+        prefetchApi("/games?page=0&size=50&sort=updatedTime,desc");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load dashboard");
       } finally {

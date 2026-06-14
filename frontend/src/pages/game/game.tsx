@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiFetch, formatUserDateTime, getResponseErrorMessage } from "../../api/utils";
+import { apiFetch, formatUserDateTime, getResponseErrorMessage, prefetchApi } from "../../api/utils";
 type GameStatus = 'SCHEDULED' | 'LIVE' | 'FINAL';
 type Game = {
     id: number;
@@ -55,6 +55,19 @@ function GamesPage() {
         const data = await getAllgames(page, statusFilter === "ALL" ? undefined : statusFilter);
 
         setGames(data);
+        if (data.length === PAGE_SIZE) {
+          const nextQuery = new URLSearchParams({
+            size: String(PAGE_SIZE),
+            page: String(page + 1),
+            sort: "updatedTime,desc",
+          });
+          if (statusFilter !== "ALL") {
+            nextQuery.set("status", statusFilter);
+          }
+          prefetchApi(`/games?${nextQuery}`);
+        }
+        prefetchApi("/games?status=LIVE&size=20&sort=updatedTime,desc");
+        prefetchApi("/alerts?status=CREATED");
       }
       catch (err)
       {
@@ -83,7 +96,7 @@ function GamesPage() {
     return () => clearInterval(intervalId);
   }, [page, statusFilter]);
 
-  if (loading) return <div>Loading games...</div>;
+  if (loading && games.length === 0) return <div>Loading games...</div>;
   if (error) return <div>{error || "Games failed to load..."}</div>;
 
 
@@ -127,12 +140,13 @@ function GamesPage() {
           </div>
         ))}
       </div>
+      {loading && <p className="games-updating" role="status">Updating games...</p>}
       <nav className="games-pagination" aria-label="Games pages">
-        <button type="button" disabled={page === 0} onClick={() => setPage(current => current - 1)}>
+        <button type="button" disabled={loading || page === 0} onClick={() => setPage(current => current - 1)}>
           Previous
         </button>
         <span>Page {page + 1}</span>
-        <button type="button" disabled={games.length < PAGE_SIZE} onClick={() => setPage(current => current + 1)}>
+        <button type="button" disabled={loading || games.length < PAGE_SIZE} onClick={() => setPage(current => current + 1)}>
           Next
         </button>
       </nav>

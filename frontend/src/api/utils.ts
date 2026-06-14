@@ -1,6 +1,20 @@
 export const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 const TOKEN_KEY = "jwtToken";
 const USER_ID_KEY = "id";
+const GET_CACHE_TTL_MS = 30_000;
+
+type CachedResponse = {
+  expiresAt: number;
+  response: Response;
+};
+
+const getCache = new Map<string, CachedResponse>();
+const inFlightGets = new Map<string, Promise<Response>>();
+
+function clearApiCache() {
+  getCache.clear();
+  inFlightGets.clear();
+}
 
 function decodeJwtPayload(token: string): { exp?: number } {
   const payload = token.split(".")[1];
@@ -14,6 +28,7 @@ function decodeJwtPayload(token: string): { exp?: number } {
 }
 
 export function clearJwtToken() {
+  clearApiCache();
   localStorage.removeItem(TOKEN_KEY);
   clearUserId();
 }
@@ -42,7 +57,15 @@ export function getJwtToken() {
 }
 
 export function saveJwtToken(token: string) {
+  clearApiCache();
   localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function warmBackend() {
+  void fetch(`${BASE_URL}/actuator/health`, {
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  }).catch(() => undefined);
 }
 
 export async function loginUser(username: string, password: string) {
@@ -117,22 +140,61 @@ export async function getResponseErrorMessage(res: Response) {
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const token = getJwtToken();
+  const method = (options.method ?? "GET").toUpperCase();
+  const cacheKey = `${token ?? "anonymous"}:${path}`;
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-
-  // token missing/expired → backend returns 401/403 → bounce to login
-  if (res.status === 401 || res.status === 403) {
-    clearJwtToken();
-    window.location.href = "/";
-    return Promise.reject(new Error("Session expired"));
+  if (method === "GET") {
+    const cached = getCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.response.clone();
+    }
+    getCache.delete(cacheKey);
+  } else {
+    clearApiCache();
   }
 
-  return res;
+  const performFetch = async () => {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+
+    if (res.status === 401 || res.status === 403) {
+      clearJwtToken();
+      window.location.href = "/";
+      throw new Error("Session expired");
+    }
+
+    if (method === "GET" && res.ok) {
+      getCache.set(cacheKey, {
+        expiresAt: Date.now() + GET_CACHE_TTL_MS,
+        response: res.clone(),
+      });
+    }
+
+    return res;
+  };
+
+  if (method !== "GET") {
+    return performFetch();
+  }
+
+  let request = inFlightGets.get(cacheKey);
+  if (!request) {
+    request = performFetch().finally(() => inFlightGets.delete(cacheKey));
+    inFlightGets.set(cacheKey, request);
+  }
+
+  return (await request).clone();
+}
+
+export function prefetchApi(path: string) {
+  void apiFetch(path)
+    .then(response => response.body?.cancel())
+    .catch(() => undefined);
 }
