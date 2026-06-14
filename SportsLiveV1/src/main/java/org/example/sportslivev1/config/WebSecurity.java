@@ -52,6 +52,7 @@ public class WebSecurity {
                         .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/users/login", "/users/signup").permitAll()
                         .anyRequest().authenticated()
                 );
