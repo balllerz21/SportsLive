@@ -13,9 +13,19 @@ type Game = {
     updatedTime: string;
   }
 
+type PageResponse<T> = {
+  content: T[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+};
+
 const PAGE_SIZE = 50;
 
-async function getAllgames(page: number, status?: GameStatus) : Promise<Game[]>
+async function getAllgames(page: number, status?: GameStatus) : Promise<PageResponse<Game>>
 {
   const query = new URLSearchParams({
     size: String(PAGE_SIZE),
@@ -31,8 +41,7 @@ async function getAllgames(page: number, status?: GameStatus) : Promise<Game[]>
     throw new Error(await getResponseErrorMessage(res));
   }
 
-  const games: Game[] = await res.json();
-  return games;
+  return res.json() as Promise<PageResponse<Game>>;
 }
 type FilterStatus = GameStatus | 'ALL';
 function GamesPage() {
@@ -41,6 +50,7 @@ function GamesPage() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('ALL');
   const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const selectStatus = (status: FilterStatus) => {
     setStatusFilter(status);
@@ -54,8 +64,9 @@ function GamesPage() {
       try {
         const data = await getAllgames(page, statusFilter === "ALL" ? undefined : statusFilter);
 
-        setGames(data);
-        if (data.length === PAGE_SIZE) {
+        setGames(data.content);
+        setTotalPages(data.page.totalPages);
+        if (page + 1 < data.page.totalPages) {
           const nextQuery = new URLSearchParams({
             size: String(PAGE_SIZE),
             page: String(page + 1),
@@ -85,7 +96,8 @@ function GamesPage() {
     const pollScores = async () => {
       try {
         const freshData = await getAllgames(page, statusFilter === "ALL" ? undefined : statusFilter);
-        setGames(freshData);
+        setGames(freshData.content);
+        setTotalPages(freshData.page.totalPages);
       } catch (err) {
         console.error("Polling failed", err);
       }
@@ -146,7 +158,7 @@ function GamesPage() {
           Previous
         </button>
         <span>Page {page + 1}</span>
-        <button type="button" disabled={loading || games.length < PAGE_SIZE} onClick={() => setPage(current => current + 1)}>
+        <button type="button" disabled={loading || page + 1 >= totalPages} onClick={() => setPage(current => current + 1)}>
           Next
         </button>
       </nav>

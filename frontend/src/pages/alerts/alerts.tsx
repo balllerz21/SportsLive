@@ -32,9 +32,23 @@ type AlertFilters = {
   period: FilterPeriod;
 };
 
-async function getAlerts(filters: AlertFilters) : Promise<AlertDto[]>
+type PageResponse<T> = {
+  content: T[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+};
+
+const PAGE_SIZE = 50;
+
+async function getAlerts(filters: AlertFilters, page: number) : Promise<PageResponse<AlertDto>>
 {
     const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('size', String(PAGE_SIZE));
     if (filters.status !== 'ALL') params.set('status', filters.status);
     if (filters.alertType !== 'ALL') params.set('alertType', filters.alertType);
     if (filters.teamName.trim()) params.set('teamName', filters.teamName.trim());
@@ -45,8 +59,7 @@ async function getAlerts(filters: AlertFilters) : Promise<AlertDto[]>
     if (!res.ok) {
         throw new Error(await getResponseErrorMessage(res));
     }
-    const alerts : AlertDto[] = await res.json();
-    return alerts;
+    return res.json() as Promise<PageResponse<AlertDto>>;
 }
 
 function AlertsList() {
@@ -57,6 +70,8 @@ function AlertsList() {
   const [typeFilter, setTypeFilter] = useState<FilterAlertType>('ALL');
   const [teamFilter, setTeamFilter] = useState('');
   const [periodFilter, setPeriodFilter] = useState<FilterPeriod>('ALL');
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const refreshAlerts = useCallback(async () => {
     const data = await getAlerts({
@@ -64,9 +79,10 @@ function AlertsList() {
       alertType: typeFilter,
       teamName: teamFilter,
       period: periodFilter,
-    });
-    setAlerts(data);
-  }, [statusFilter, typeFilter, teamFilter, periodFilter]);
+    }, page);
+    setAlerts(data.content);
+    setTotalPages(data.page.totalPages);
+  }, [statusFilter, typeFilter, teamFilter, periodFilter, page]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -115,24 +131,24 @@ function AlertsList() {
       </div>
 
       <div className="alerts-filter-bar">
-        <button className={statusFilter === "ALL" ? "is-active" : ""} onClick={() => setStatusFilter("ALL")}>
+        <button className={statusFilter === "ALL" ? "is-active" : ""} onClick={() => { setStatusFilter("ALL"); setPage(0); }}>
           All
         </button>
-        <button className={statusFilter === "CREATED" ? "is-active" : ""} onClick={() => setStatusFilter("CREATED")}>
+        <button className={statusFilter === "CREATED" ? "is-active" : ""} onClick={() => { setStatusFilter("CREATED"); setPage(0); }}>
           Active
         </button>
-        <button className={statusFilter === "TRIGGERED" ? "is-active" : ""} onClick={() => setStatusFilter("TRIGGERED")}>
+        <button className={statusFilter === "TRIGGERED" ? "is-active" : ""} onClick={() => { setStatusFilter("TRIGGERED"); setPage(0); }}>
           Triggered
         </button>
-        <button className={statusFilter === "FINISHED" ? "is-active" : ""} onClick={() => setStatusFilter("FINISHED")}>
+        <button className={statusFilter === "FINISHED" ? "is-active" : ""} onClick={() => { setStatusFilter("FINISHED"); setPage(0); }}>
           Finished
         </button>
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as FilterAlertType)}>
+        <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value as FilterAlertType); setPage(0); }}>
           <option value="ALL">All types</option>
           <option value="SCORE_OVER">Score over</option>
           <option value="SCORE_UNDER">Score under</option>
         </select>
-        <select value={periodFilter} onChange={e => setPeriodFilter(e.target.value as FilterPeriod)}>
+        <select value={periodFilter} onChange={e => { setPeriodFilter(e.target.value as FilterPeriod); setPage(0); }}>
           <option value="ALL">Any time</option>
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
@@ -141,7 +157,7 @@ function AlertsList() {
         </select>
         <input
           value={teamFilter}
-          onChange={e => setTeamFilter(e.target.value)}
+          onChange={e => { setTeamFilter(e.target.value); setPage(0); }}
           placeholder="Team name"
         />
       </div>
@@ -173,6 +189,15 @@ function AlertsList() {
         ))}
         </ul>
       )}
+      <nav className="alerts-pagination" aria-label="Alerts pages">
+        <button type="button" disabled={loading || page === 0} onClick={() => setPage(current => current - 1)}>
+          Previous
+        </button>
+        <span>Page {page + 1}</span>
+        <button type="button" disabled={loading || page + 1 >= totalPages} onClick={() => setPage(current => current + 1)}>
+          Next
+        </button>
+      </nav>
     </main>
   );
 }

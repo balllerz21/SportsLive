@@ -27,13 +27,18 @@ type AlertDto = {
   awayTeam?: string;
 };
 
+type PageResponse<T> = {
+  content: T[];
+};
+
 async function getLiveGames() {
   const res = await apiFetch("/games?status=LIVE&size=20&sort=updatedTime,desc");
   if (!res.ok) {
     throw new Error(await getResponseErrorMessage(res));
   }
 
-  return res.json() as Promise<Game[]>;
+  const page = await res.json() as PageResponse<Game>;
+  return page.content;
 }
 
 async function getActiveAlerts() {
@@ -42,7 +47,8 @@ async function getActiveAlerts() {
     throw new Error(await getResponseErrorMessage(res));
   }
 
-  return res.json() as Promise<AlertDto[]>;
+  const page = await res.json() as PageResponse<AlertDto>;
+  return page.content;
 }
 
 function DashboardPage() {
