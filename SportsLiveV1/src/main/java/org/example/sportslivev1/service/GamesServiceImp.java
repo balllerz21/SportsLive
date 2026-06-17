@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -62,5 +63,15 @@ public class GamesServiceImp implements GamesService {
     @Transactional
     public void saveGame(Games game) {
         gamesRepo.save(game);
+    }
+    @Async
+    public void createOrUpdateGames(Instant date)
+    {
+        //TODO: Make logic here. U will need a table that will have access to this for every user call it sessions table or somethimg.
+        // - OneToMany relationship
+        // - There store log in timestamp
+        // - compare it and then add missed games to the app. 
+        // - make sure no duplicates by checking the game_id exists
+        // - if it exists then just update it
     }
 }

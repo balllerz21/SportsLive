@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.security.Principal;
 import java.time.Instant;
-import java.util.List;
 
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -26,7 +26,7 @@ public class Scheduler {
     @Autowired
     SSERegistry sseRegistry;
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(initialDelay = 120000, fixedRate = 60000)
     public void scheduleLive() {
         pollingService.createOrUpdateGame("basketball", "nba");
         pollingService.createOrUpdateGame("basketball", "wnba");
