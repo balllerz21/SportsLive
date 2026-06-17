@@ -7,6 +7,7 @@ const LoginPage: React.FC = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [ showPassword, setShowPassword ] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -15,6 +16,8 @@ const LoginPage: React.FC = () => {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (loading) return;
+        setLoading(true);
         if (username === '' || password === '') {
             alert('Please fill in both fields');
             return;
@@ -33,6 +36,9 @@ const LoginPage: React.FC = () => {
         } catch (error) {
             console.error('Error occurred while logging in:', error);
             alert(error instanceof Error ? error.message : "Login failed");
+        }
+        finally{
+            setLoading(false);
         }
     };
 

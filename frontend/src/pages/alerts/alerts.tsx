@@ -189,7 +189,7 @@ function AlertsList() {
         ))}
         </ul>
       )}
-      <nav className="alerts-pagination" aria-label="Alerts pages">
+      <nav className="games-pagination" aria-label="Alerts pages">
         <button type="button" disabled={loading || page === 0} onClick={() => setPage(current => current - 1)}>
           Previous
         </button>
